@@ -463,6 +463,14 @@ typedef void (*uartccb_t)(UARTDriver *uartp, uint16_t c);
 typedef void (*uartecb_t)(UARTDriver *uartp, uartflags_t e);
 
 /**
+ * @brief   Receive Half-transfer UART notification callback type.
+ *
+ * @param[in] uartp     pointer to the @p UARTDriver object
+ * @param[in] full      flag set to 1 for the second half, and 0 for the first half
+ */
+typedef void (*uarthcb_t)(UARTDriver *uartp, uartflags_t full);
+
+/**
  * @brief   Driver configuration structure.
  * @note    It could be empty on some architectures.
  */
@@ -504,6 +512,16 @@ typedef struct {
    * @brief Initialization value for the CR3 register.
    */
   uint16_t                  cr3;
+  /* Additional (optional) handlers. Placed here for the struct compatibility.*/
+  /**
+   * @brief   Receiver timeout (idle) callback.
+   * @details Handles an idle interrupt for USARTv1.
+   */
+  uartcb_t                  timeout_cb;
+  /**
+   * @brief Half-transfer receive buffer callback.
+   */
+  uarthcb_t                 rxhalf_cb;
 } UARTConfig;
 
 /**
