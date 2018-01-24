@@ -281,6 +281,11 @@ static void usart_start(UARTDriver *uartp) {
   /* Mustn't ever set TCIE here - if done, it causes an immediate
      interrupt.*/
   cr1 = USART_CR1_UE | USART_CR1_PEIE | USART_CR1_TE | USART_CR1_RE;
+
+  /* Add Idle interrupt if needed */
+  if (uartp->config->timeout_cb != NULL)
+    cr1 |= USART_CR1_IDLEIE;
+
   u->CR1 = uartp->config->cr1 | cr1;
 
   /* Starting the receiver idle loop.*/
@@ -308,6 +313,15 @@ static void uart_lld_serve_rx_end_irq(UARTDriver *uartp, uint32_t flags) {
     /* Receiver in idle state, a callback is generated, if enabled, for each
        received character and then the driver stays in the same state.*/
     _uart_rx_idle_code(uartp);
+  }
+  /* DMA half-transter interrupt handling - for the 1st/2nd half transfers. */
+  else if (uartp->config->rxhalf_cb != NULL) {
+    if ((flags & STM32_DMA_ISR_HTIF) != 0) {
+      _uart_rx_half_isr_code(uartp, 0);
+    }
+    else if ((flags & STM32_DMA_ISR_TCIF) != 0) {
+      _uart_rx_half_isr_code(uartp, 1);
+    }
   }
   else {
     /* Receiver in active state, a callback is generated, if enabled, after
@@ -1118,8 +1132,14 @@ void uart_lld_start_receive(UARTDriver *uartp, size_t n, void *rxbuf) {
   /* RX DMA channel preparation.*/
   dmaStreamSetMemory0(uartp->dmarx, rxbuf);
   dmaStreamSetTransactionSize(uartp->dmarx, n);
-  dmaStreamSetMode(uartp->dmarx, uartp->dmarxmode  | STM32_DMA_CR_DIR_P2M |
-                                 STM32_DMA_CR_MINC | STM32_DMA_CR_TCIE);
+
+  uint32_t mode = STM32_DMA_CR_DIR_P2M | STM32_DMA_CR_MINC | STM32_DMA_CR_TCIE;
+
+  /* DMA half-transfer interrupt & circular mode, if needed */
+  if (uartp->config->rxhalf_cb != NULL)
+    mode |= STM32_DMA_CR_HTIE | STM32_DMA_CR_CIRC;
+
+  dmaStreamSetMode(uartp->dmarx, uartp->dmarxmode | mode);
 
   /* Starting transfer.*/
   dmaStreamEnable(uartp->dmarx);
