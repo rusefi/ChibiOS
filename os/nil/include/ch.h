@@ -615,8 +615,8 @@ struct nil_os_instance {
 /*===========================================================================*/
 
 #if CH_DBG_SYSTEM_STATE_CHECK == TRUE
-#define __dbg_enter_lock() (nil.lock_cnt = (cnt_t)1)
-#define __dbg_leave_lock() (nil.lock_cnt = (cnt_t)0)
+#define _dbg_enter_lock() do {ch.dbg.lock_cnt = (cnt_t)1; ON_LOCK_HOOK;} while(0)
+#define _dbg_leave_lock() do {ON_UNLOCK_HOOK; ch.dbg.lock_cnt = (cnt_t)0;} while(0)
 #endif
 
 /**
