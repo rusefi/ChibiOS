@@ -131,6 +131,43 @@ static const efl_lld_size_t efl_lld_flash_sizes[] = {
        .desc = efl_lld_size2
       }
 };
+#elif defined (STM32F407xx)
+/* Sector table for 1M device. */
+static const flash_sector_descriptor_t efl_lld_sect[STM32_FLASH_SECTORS_TOTAL] = {
+  {         0,                        16384},   /* Sector  0. */
+  { 1 * 16384,                        16384},   /* Sector  1. */
+  { 2 * 16384,                        16384},   /* Sector  2. */
+  { 3 * 16384,                        16384},   /* Sector  3. */
+  { 4 * 16384,                        65536},   /* Sector  4. */
+  { 4 * 16384 + 65536,               131072},   /* Sector  5. */
+  { 4 * 16384 + 65536 +  1 * 131072, 131072},   /* Sector  6. */
+  { 4 * 16384 + 65536 +  2 * 131072, 131072},   /* Sector  7. */
+  { 4 * 16384 + 65536 +  3 * 131072, 131072},   /* Sector  8. */
+  { 4 * 16384 + 65536 +  4 * 131072, 131072},   /* Sector  9. */
+  { 4 * 16384 + 65536 +  5 * 131072, 131072},   /* Sector 10. */
+  { 4 * 16384 + 65536 +  6 * 131072, 131072}    /* Sector 11. */
+};
+
+/* The descriptors for 1M device. */
+static const flash_descriptor_t efl_lld_size[STM32_FLASH_NUMBER_OF_BANKS] = {
+      { /* Single bank organisation. */
+       .attributes        = FLASH_ATTR_ERASED_IS_ONE |
+                            FLASH_ATTR_MEMORY_MAPPED,
+       .page_size         = STM32_FLASH_LINE_SIZE,
+       .sectors_count     = STM32_FLASH_SECTORS_TOTAL,
+       .sectors           = efl_lld_sect,
+       .sectors_size      = 0,
+       .address           = (uint8_t *)FLASH_BASE,
+       .size              = STM32_FLASH_SIZE * STM32_FLASH_SIZE_SCALE
+      }
+};
+
+/* Table describing possible flash sizes and descriptors for this device. */
+static const efl_lld_size_t efl_lld_flash_sizes[] = {
+      {
+       .desc = efl_lld_size
+      }
+};
 #else
 #error "This EFL driver does not support the selected device"
 #endif
@@ -325,10 +362,12 @@ flash_error_t efl_lld_read(void *instance, flash_offset_t offset,
   memcpy((void *)rp, (const void *)efl_lld_get_descriptor(instance)->address
                                    + offset, n);
 
+#ifdef FLASH_SR_RDERR
   /* Checking for errors after reading.*/
   if ((devp->flash->SR & FLASH_SR_RDERR) != 0U) {
     err = FLASH_ERROR_READ;
   }
+#endif
 
   /* Ready state again.*/
   devp->state = FLASH_READY;
