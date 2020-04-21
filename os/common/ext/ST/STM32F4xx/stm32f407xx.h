@@ -6727,9 +6727,9 @@ typedef struct
 #define FLASH_SR_EOP_Pos               (0U)                                    
 #define FLASH_SR_EOP_Msk               (0x1U << FLASH_SR_EOP_Pos)              /*!< 0x00000001 */
 #define FLASH_SR_EOP                   FLASH_SR_EOP_Msk                        
-#define FLASH_SR_SOP_Pos               (1U)                                    
-#define FLASH_SR_SOP_Msk               (0x1U << FLASH_SR_SOP_Pos)              /*!< 0x00000002 */
-#define FLASH_SR_SOP                   FLASH_SR_SOP_Msk                        
+#define FLASH_SR_OPERR_Pos             (1U)                                    
+#define FLASH_SR_OPERR_Msk             (0x1U << FLASH_SR_OPERR_Pos)            /*!< 0x00000002 */
+#define FLASH_SR_OPERR                 FLASH_SR_OPERR_Msk                      
 #define FLASH_SR_WRPERR_Pos            (4U)                                    
 #define FLASH_SR_WRPERR_Msk            (0x1U << FLASH_SR_WRPERR_Pos)           /*!< 0x00000010 */
 #define FLASH_SR_WRPERR                FLASH_SR_WRPERR_Msk                     
