@@ -50,6 +50,10 @@
 #define HAL_USE_DAC                         FALSE
 #endif
 
+#if !defined(HAL_USE_EFL)
+#define HAL_USE_EFL                         FALSE
+#endif
+
 #if !defined(HAL_USE_EXT)
 #define HAL_USE_ETX                         FALSE
 #endif
@@ -120,6 +124,8 @@
 #include "hal_files.h"
 #include "hal_ioblock.h"
 #include "hal_mmcsd.h"
+#include "hal_persistent.h"
+#include "hal_flash.h"
 
 /* Shared headers.*/
 #include "hal_buffers.h"
@@ -131,6 +137,7 @@
 #include "hal_can.h"
 #include "hal_crypto.h"
 #include "hal_dac.h"
+#include "hal_efl.h"
 #include "hal_ext.h"
 #include "hal_gpt.h"
 #include "hal_i2c.h"

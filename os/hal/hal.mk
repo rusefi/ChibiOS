@@ -13,6 +13,7 @@ HALSRC := $(CHIBIOS)/os/hal/src/hal.c \
           $(CHIBIOS)/os/hal/src/hal_st.c \
           $(CHIBIOS)/os/hal/src/hal_buffers.c \
           $(CHIBIOS)/os/hal/src/hal_queues.c \
+          $(CHIBIOS)/os/hal/src/hal_flash.c \
           $(CHIBIOS)/os/hal/src/hal_mmcsd.c
 ifneq ($(findstring HAL_USE_ADC TRUE,$(HALCONF)),)
 HALSRC += $(CHIBIOS)/os/hal/src/hal_adc.c
@@ -25,6 +26,9 @@ HALSRC += $(CHIBIOS)/os/hal/src/hal_crypto.c
 endif
 ifneq ($(findstring HAL_USE_DAC TRUE,$(HALCONF)),)
 HALSRC += $(CHIBIOS)/os/hal/src/hal_dac.c
+endif
+ifneq ($(findstring HAL_USE_EFL TRUE,$(HALCONF)),)
+HALSRC += $(CHIBIOS)/os/hal/src/hal_efl.c
 endif
 ifneq ($(findstring HAL_USE_EXT TRUE,$(HALCONF)),)
 HALSRC += $(CHIBIOS)/os/hal/src/hal_ext.c
@@ -84,11 +88,13 @@ else
 HALSRC = $(CHIBIOS)/os/hal/src/hal.c \
          $(CHIBIOS)/os/hal/src/hal_buffers.c \
          $(CHIBIOS)/os/hal/src/hal_queues.c \
+         $(CHIBIOS)/os/hal/src/hal_flash.c \
          $(CHIBIOS)/os/hal/src/hal_mmcsd.c \
          $(CHIBIOS)/os/hal/src/hal_adc.c \
          $(CHIBIOS)/os/hal/src/hal_can.c \
          $(CHIBIOS)/os/hal/src/hal_crypto.c \
          $(CHIBIOS)/os/hal/src/hal_dac.c \
+         $(CHIBIOS)/os/hal/src/hal_efl.c \
          $(CHIBIOS)/os/hal/src/hal_ext.c \
          $(CHIBIOS)/os/hal/src/hal_gpt.c \
          $(CHIBIOS)/os/hal/src/hal_i2c.c \
