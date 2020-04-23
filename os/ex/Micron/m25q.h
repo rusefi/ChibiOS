@@ -111,6 +111,8 @@
                                                  M25Q_FLAGS_PROGRAM_ERROR | \
                                                  M25Q_FLAGS_VPP_ERROR |     \
                                                  M25Q_FLAGS_PROTECTION_ERROR)
+
+#define W25Q_FLAGS_BUSY                             0x01U
 /** @} */
 
 /*===========================================================================*/
@@ -163,14 +165,14 @@
  * @brief   Supported JEDEC manufacturer identifiers.
  */
 #if !defined(M25Q_SUPPORTED_MANUFACTURE_IDS) || defined(__DOXYGEN__)
-#define M25Q_SUPPORTED_MANUFACTURE_IDS      {0x20}
+#define M25Q_SUPPORTED_MANUFACTURE_IDS      {0x20, 0xef}
 #endif
 
 /**
  * @brief   Supported memory type identifiers.
  */
 #if !defined(M25Q_SUPPORTED_MEMORY_TYPE_IDS) || defined(__DOXYGEN__)
-#define M25Q_SUPPORTED_MEMORY_TYPE_IDS      {0xBA, 0xBB}
+#define M25Q_SUPPORTED_MEMORY_TYPE_IDS      {0xBA, 0xBB, 0x40}
 #endif
 
 /**

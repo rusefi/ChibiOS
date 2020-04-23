@@ -290,22 +290,37 @@ void m25q_reset_memory(M25QDriver *devp) {
 static flash_error_t m25q_poll_status(M25QDriver *devp) {
   uint8_t sts;
 
-  do {
+  /* Micron */
+  if (devp->device_id[0] == 0x20) {
+    do {
 #if M25Q_NICE_WAITING == TRUE
-    osalThreadSleepMilliseconds(1);
+      osalThreadSleepMilliseconds(1);
 #endif
-    /* Read status command.*/
-    jesd216_cmd_receive(devp->config->busp, M25Q_CMD_READ_FLAG_STATUS_REGISTER,
-                        1, &sts);
-  } while ((sts & M25Q_FLAGS_PROGRAM_ERASE) == 0U);
+      /* Read status command.*/
+      jesd216_cmd_receive(devp->config->busp, M25Q_CMD_READ_FLAG_STATUS_REGISTER,
+                          1, &sts);
+    } while ((sts & M25Q_FLAGS_PROGRAM_ERASE) == 0U);
 
-  /* Checking for errors.*/
-  if ((sts & M25Q_FLAGS_ALL_ERRORS) != 0U) {
-    /* Clearing status register.*/
-    jesd216_cmd(devp->config->busp, M25Q_CMD_CLEAR_FLAG_STATUS_REGISTER);
+    /* Checking for errors.*/
+    if ((sts & M25Q_FLAGS_ALL_ERRORS) != 0U) {
+      /* Clearing status register.*/
+      jesd216_cmd(devp->config->busp, M25Q_CMD_CLEAR_FLAG_STATUS_REGISTER);
 
-    /* Program operation failed.*/
-    return FLASH_ERROR_PROGRAM;
+      /* Program operation failed.*/
+      return FLASH_ERROR_PROGRAM;
+    }
+  }
+
+  /* Windbond */
+  if (devp->device_id[0] == 0xef) {
+    do {
+#if M25Q_NICE_WAITING == TRUE
+      osalThreadSleepMilliseconds(1);
+#endif
+      /* Read status command.*/
+      jesd216_cmd_receive(devp->config->busp, M25Q_CMD_READ_STATUS_REGISTER,
+                          1, &sts);
+    } while ((sts & W25Q_FLAGS_BUSY) != 0U);
   }
 
   return FLASH_NO_ERROR;
@@ -561,38 +576,66 @@ static flash_error_t m25q_query_erase(void *instance, uint32_t *msec) {
     /* Bus acquired.*/
     jesd216_bus_acquire(devp->config->busp, devp->config->buscfg);
 
-    /* Read status command.*/
-    jesd216_cmd_receive(devp->config->busp, M25Q_CMD_READ_FLAG_STATUS_REGISTER,
-                        1, &sts);
+    /* Micron */
+    if (devp->device_id[0] == 0x20) {
+      /* Read status command.*/
+      jesd216_cmd_receive(devp->config->busp, M25Q_CMD_READ_FLAG_STATUS_REGISTER,
+                          1, &sts);
 
-    /* If the P/E bit is zero (busy) or the flash in a suspended state then
-       report that the operation is still in progress.*/
-    if (((sts & M25Q_FLAGS_PROGRAM_ERASE) == 0U) ||
-        ((sts & M25Q_FLAGS_ERASE_SUSPEND) != 0U)) {
+      /* If the P/E bit is zero (busy) or the flash in a suspended state then
+         report that the operation is still in progress.*/
+      if (((sts & M25Q_FLAGS_PROGRAM_ERASE) == 0U) ||
+          ((sts & M25Q_FLAGS_ERASE_SUSPEND) != 0U)) {
 
-      /* Bus released.*/
-      jesd216_bus_release(devp->config->busp);
+        /* Bus released.*/
+        jesd216_bus_release(devp->config->busp);
 
-      /* Recommended time before polling again, this is a simplified
-         implementation.*/
-      if (msec != NULL) {
-        *msec = 1U;
+        /* Recommended time before polling again, this is a simplified
+           implementation.*/
+        if (msec != NULL) {
+          *msec = 1U;
+        }
+
+        return FLASH_BUSY_ERASING;
       }
 
-      return FLASH_BUSY_ERASING;
+      /* The device is ready to accept commands.*/
+      devp->state = FLASH_READY;
+
+      /* Checking for errors.*/
+      if ((sts & M25Q_FLAGS_ALL_ERRORS) != 0U) {
+
+        /* Clearing status register.*/
+        jesd216_cmd(devp->config->busp, M25Q_CMD_CLEAR_FLAG_STATUS_REGISTER);
+
+        /* Erase operation failed.*/
+        return FLASH_ERROR_ERASE;
+      }
     }
+    /* Windbond */
+    if (devp->device_id[0] == 0xef) {
+      /* Read status command.*/
+      jesd216_cmd_receive(devp->config->busp, M25Q_CMD_READ_STATUS_REGISTER,
+                          1, &sts);
 
-    /* The device is ready to accept commands.*/
-    devp->state = FLASH_READY;
+      /* If the busy bit is 1 then
+         report that the operation is still in progress.*/
+      if ((sts & W25Q_FLAGS_BUSY) != 0U) {
 
-    /* Checking for errors.*/
-    if ((sts & M25Q_FLAGS_ALL_ERRORS) != 0U) {
+        /* Bus released.*/
+        jesd216_bus_release(devp->config->busp);
 
-      /* Clearing status register.*/
-      jesd216_cmd(devp->config->busp, M25Q_CMD_CLEAR_FLAG_STATUS_REGISTER);
+        /* Recommended time before polling again, this is a simplified
+           implementation.*/
+        if (msec != NULL) {
+          *msec = 1U;
+        }
 
-      /* Erase operation failed.*/
-      return FLASH_ERROR_ERASE;
+        return FLASH_BUSY_ERASING;
+      }
+
+      /* The device is ready to accept commands.*/
+      devp->state = FLASH_READY;
     }
 
     /* Bus released.*/
