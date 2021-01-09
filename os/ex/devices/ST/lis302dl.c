@@ -332,7 +332,7 @@ static msg_t acc_reset_sensivity(void *ip) {
 static msg_t acc_set_full_scale(LIS302DLDriver *devp, lis302dl_acc_fs_t fs) {
   float newfs, scale;
   uint8_t i, cr;
-  msg_t msg;
+  msg_t msg = MSG_OK;
 
   osalDbgCheck(devp != NULL);
 
@@ -354,7 +354,7 @@ static msg_t acc_set_full_scale(LIS302DLDriver *devp, lis302dl_acc_fs_t fs) {
     msg = MSG_RESET;
   }
 
-  if((msg == MSG_OK) && 
+  if((msg == MSG_OK) &&
      (newfs != devp->accfullscale)) {
     /* Computing scale value.*/
     scale = newfs / devp->accfullscale;
