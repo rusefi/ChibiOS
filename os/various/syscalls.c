@@ -182,42 +182,4 @@ int _isatty_r(struct _reent *r, int fd) {
   return 1;
 }
 
-/***************************************************************************/
-
-__attribute__((used))
-void _exit(int status) {
-
-  (void) status;
-
-  chSysHalt("exit");
-  abort();
-}
-
-/***************************************************************************/
-
-__attribute__((used))
-int _kill(int pid, int sig) {
-
-  (void) pid;
-  (void) sig;
-
-  chSysHalt("kill");
-  abort();
-}
-
-/***************************************************************************/
-
-__attribute__((used))
-int _getpid(void) {
-
-  return 1;
-  abort();
-}
-
-/***************************************************************************/
-/* Only used in C++ mode.*/
-void __cxa_pure_virtual(void) {
-  chSysHalt("pure virtual");
-}
-
 /*** EOF ***/
