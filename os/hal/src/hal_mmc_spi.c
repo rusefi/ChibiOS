@@ -31,6 +31,40 @@
 
 #if (HAL_USE_MMC_SPI == TRUE) || defined(__DOXYGEN__)
 
+#define MMC_USE_POLLED_EXCHANGE TRUE
+
+// MMC_USE_POLLED_EXCHANGE is an optimzation that uses the synchronous, non-DMA
+// method of directly twiddling the peripheral's registers.  It saves us from doing
+// so many context switches, plus it makes things cache-friendly by avoiding DMA
+// transfers to/from stack allocated storage.
+// See https://forum.chibios.org/viewtopic.php?f=38&t=5767
+#if MMC_USE_POLLED_EXCHANGE
+void spiSendSmall(SPIDriver* spip, size_t n, const uint8_t* buf) {
+  for (size_t i = 0; i < n; i++) {
+    spiPolledExchange(spip, buf[i]);
+  }
+}
+
+void spiReceiveSmall(SPIDriver* spip, size_t n, uint8_t* buf) {
+  for (size_t i = 0; i < n; i++) {
+    /* MMC card expects to receive 0xFF */
+    buf[i] = spiPolledExchange(spip, 0xFF);
+  }
+}
+
+void spiIgnoreSmall(SPIDriver* spip, size_t n) {
+  for (size_t i = 0; i < n; i++) {
+    /* MMC card expects to receive 0xFF */
+    spiPolledExchange(spip, 0xFF);
+  }
+}
+#else
+// Without the optimization, use the non-small counterparts instead
+#define spiSendSmall(s, n, b) spiSend(s, n, b)
+#define spiReceiveSmall(s, n, b) spiReceive(s, n, b)
+#define spiIgnoreSmall(s, n) spiIgnore(s, n)
+#endif
+
 /*===========================================================================*/
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
@@ -284,7 +318,7 @@ static bool mmc_wait_idle(MMCDriver *mmcp) {
   unsigned i;
 
   for (i = 0U; i < 16U; i++) {
-    spiReceive(mmcp->config->spip, 1U, mmcp->buffer);
+    spiReceiveSmall(mmcp->config->spip, 1U, mmcp->buffer);
     if (mmcp->buffer[0] == 0xFFU) {
       return HAL_SUCCESS;
     }
@@ -293,7 +327,7 @@ static bool mmc_wait_idle(MMCDriver *mmcp) {
   /* Looks like it is a long wait.*/
   i = 0U;
   do {
-    spiReceive(mmcp->config->spip, 1U, mmcp->buffer);
+    spiReceiveSmall(mmcp->config->spip, 1U, mmcp->buffer);
     if (mmcp->buffer[0] == 0xFFU) {
       return HAL_SUCCESS;
     }
@@ -332,7 +366,7 @@ static bool mmc_send_hdr(MMCDriver *mmcp, uint8_t cmd, uint32_t arg) {
   /* Calculate CRC for command header, shift to right position, add stop bit.*/
   mmcp->buffer[5] = ((mmc_crc7(0, mmcp->buffer, 5U) & 0x7FU) << 1U) | 0x01U;
 
-  spiSend(mmcp->config->spip, 6, mmcp->buffer);
+  spiSendSmall(mmcp->config->spip, 6, mmcp->buffer);
 
   return HAL_SUCCESS;
 }
@@ -352,7 +386,7 @@ static bool mmc_recvr1(MMCDriver *mmcp, uint8_t *r1p) {
   int i;
 
   for (i = 0; i < 9; i++) {
-    spiReceive(mmcp->config->spip, 1, mmcp->buffer);
+    spiReceiveSmall(mmcp->config->spip, 1, mmcp->buffer);
     *r1p = mmcp->buffer[0];
     if (mmcp->buffer[0] != 0xFFU) {
       return HAL_SUCCESS;
@@ -376,7 +410,7 @@ static bool mmc_recvr3(MMCDriver *mmcp, uint8_t *r1p) {
   bool ret;
 
   ret = mmc_recvr1(mmcp, r1p);
-  spiReceive(mmcp->config->spip, 4, mmcp->buffer);
+  spiReceiveSmall(mmcp->config->spip, 4, mmcp->buffer);
 
   return ret;
 }
@@ -466,11 +500,11 @@ static bool mmc_read_CxD(MMCDriver *mmcp, uint8_t cmd, uint32_t cxd[4]) {
 
   /* Wait for data availability.*/
   for (i = 0U; i < MMC_WAIT_DATA; i++) {
-    spiReceive(mmcp->config->spip, 1, mmcp->buffer);
+    spiReceiveSmall(mmcp->config->spip, 1, mmcp->buffer);
     if (mmcp->buffer[0] == 0xFEU) {
       uint32_t *wp;
 
-      spiReceive(mmcp->config->spip, 16, mmcp->buffer);
+      spiReceiveSmall(mmcp->config->spip, 16, mmcp->buffer);
       bp = mmcp->buffer;
       for (wp = &cxd[3]; wp >= cxd; wp--) {
         *wp = ((uint32_t)bp[0] << 24U) | ((uint32_t)bp[1] << 16U) |
@@ -479,7 +513,7 @@ static bool mmc_read_CxD(MMCDriver *mmcp, uint8_t cmd, uint32_t cxd[4]) {
       }
 
       /* CRC ignored then end of transaction. */
-      spiIgnore(mmcp->config->spip, 2);
+      spiIgnoreSmall(mmcp->config->spip, 2);
       spiUnselect(mmcp->config->spip);
 
       return HAL_SUCCESS;
@@ -594,7 +628,7 @@ bool mmcConnect(MMCDriver *mmcp) {
 
   /* Slow clock mode and 128 clock pulses.*/
   spiStart(mmcp->config->spip, mmcp->config->lscfg);
-  spiIgnore(mmcp->config->spip, 16);
+  spiIgnoreSmall(mmcp->config->spip, 16);
 
   /* SPI mode selection.*/
   i = 0U;
@@ -822,11 +856,11 @@ bool mmcSequentialRead(MMCDriver *mmcp, uint8_t *buffer) {
   }
 
   for (i = 0; i < MMC_WAIT_DATA; i++) {
-    spiReceive(mmcp->config->spip, 1, mmcp->buffer);
+    spiReceiveSmall(mmcp->config->spip, 1, buffer);
     if (mmcp->buffer[0] == 0xFEU) {
       spiReceive(mmcp->config->spip, MMCSD_BLOCK_SIZE, buffer);
       /* CRC ignored. */
-      spiIgnore(mmcp->config->spip, 2);
+      spiIgnoreSmall(mmcp->config->spip, 2);
       return HAL_SUCCESS;
     }
   }
@@ -862,7 +896,7 @@ bool mmcStopSequentialRead(MMCDriver *mmcp) {
     return HAL_FAILED;
   }
 
-  spiSend(mmcp->config->spip, sizeof(stopcmd), stopcmd);
+  spiSendSmall(mmcp->config->spip, sizeof(stopcmd), stopcmd);
 
   /* TODO Ignoring R1 answer from the command. There is no action we could
      do on error.*/
@@ -947,10 +981,10 @@ bool mmcSequentialWrite(MMCDriver *mmcp, const uint8_t *buffer) {
     return HAL_FAILED;
   }
 
-  spiSend(mmcp->config->spip, sizeof(start), start);    /* Data prologue.   */
-  spiSend(mmcp->config->spip, MMCSD_BLOCK_SIZE, buffer);/* Data.            */
-  spiIgnore(mmcp->config->spip, 2);                     /* CRC ignored.     */
-  spiReceive(mmcp->config->spip, 1, mmcp->buffer);
+  spiSendSmall(mmcp->config->spip, sizeof(start), start);/* Data prologue.   */
+  spiSend(mmcp->config->spip, MMCSD_BLOCK_SIZE, buffer); /* Data.            */
+  spiIgnoreSmall(mmcp->config->spip, 2);                 /* CRC ignored.     */
+  spiReceiveSmall(mmcp->config->spip, 1, mmcp->buffer);
   if ((mmcp->buffer[0] & 0x1FU) == 0x05U) {
     return mmc_wait_idle(mmcp);
   }
@@ -983,7 +1017,7 @@ bool mmcStopSequentialWrite(MMCDriver *mmcp) {
     return HAL_FAILED;
   }
 
-  spiSend(mmcp->config->spip, sizeof(stop), stop);
+  spiSendSmall(mmcp->config->spip, sizeof(stop), stop);
   spiUnselect(mmcp->config->spip);
 
   /* Write operation finished.*/
