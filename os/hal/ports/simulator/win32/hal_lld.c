@@ -99,6 +99,12 @@ void _sim_check_for_interrupts(void) {
     CH_IRQ_EPILOGUE();
   }
 
+#if HAL_USE_CAN
+  if (check_can_isr()) {
+    int_occurred = true;
+  }
+#endif
+
   if (int_occurred) {
     __dbg_check_lock();
     if (chSchIsPreemptionRequired())
