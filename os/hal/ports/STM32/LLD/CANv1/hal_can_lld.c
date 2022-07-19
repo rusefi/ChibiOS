@@ -818,7 +818,24 @@ void can_lld_transmit(CANDriver *canp,
   /* Pointer to a free transmission mailbox.*/
   switch (mailbox) {
   case CAN_ANY_MAILBOX:
-    tmbp = &canp->can->sTxMailBox[(canp->can->TSR & CAN_TSR_CODE) >> 24];
+    if ((DBGMCU->IDCODE >> 16) == 0x1001) {
+      /* real STM32 */
+      tmbp = &canp->can->sTxMailBox[(canp->can->TSR & CAN_TSR_CODE) >> 24];
+    } else {
+      int n;
+      /* GD32 */
+      if ((canp->can->TSR & CAN_TSR_TME0) == CAN_TSR_TME0)
+        n = 0;
+      else if ((canp->can->TSR & CAN_TSR_TME1) == CAN_TSR_TME1)
+        n = 1;
+      else if ((canp->can->TSR & CAN_TSR_TME2) == CAN_TSR_TME2)
+        n = 2;
+      else {
+        /* silence? */
+        return;
+      }
+      tmbp = &canp->can->sTxMailBox[n];
+    }
     break;
   case 1:
     tmbp = &canp->can->sTxMailBox[0];
