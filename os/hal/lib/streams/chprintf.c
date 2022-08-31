@@ -35,6 +35,7 @@
 #define MAX_FILLER 11
 #define FLOAT_PRECISION 9
 
+// returns pointer behind produced string
 static char *long_to_string_with_divisor(char *p,
                                          long num,
                                          unsigned radix,
@@ -79,8 +80,31 @@ static const long pow10[FLOAT_PRECISION] = {
     10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000
 };
 
-static char *ftoa(char *p, double num, unsigned long precision) {
+
+// rusEFI
+#if defined(__cplusplus) && defined(__OPTIMIZE__)
+#include <type_traits>
+// "g++ -O2" version, adds more strict type check and yet no "strict-aliasing" warnings!
+#define rusefi_cisnan(f) ({ \
+	static_assert(sizeof(f) == sizeof(int32_t)); \
+	union cisnanu_t { std::remove_reference_t<decltype(f)> __f; int32_t __i; } __cisnan_u = { f }; \
+	__cisnan_u.__i == 0x7FC00000; \
+})
+#else
+// "g++ -O0" or other C++/C compilers
+#define rusefi_cisnan(f) (*(((int*) (&f))) == 0x7FC00000)
+#endif /* __cplusplus && __OPTIMIZE__ */
+// end of rusEFI
+
+static char *ftoa(char *p, float num, unsigned long precision) {
   long l;
+
+  if (rusefi_cisnan(num)) {
+        *p ++ = 'N';
+        *p ++ = 'a';
+        *p ++ = 'N';
+        return p;
+  }
 
   if ((precision == 0) || (precision > FLOAT_PRECISION)) {
     precision = FLOAT_PRECISION;
@@ -140,13 +164,13 @@ int chvprintf(BaseSequentialStream *chp, const char *fmt, va_list ap) {
     if (c == 0) {
       return n;
     }
-    
+
     if (c != '%') {
       streamPut(chp, (uint8_t)c);
       n++;
       continue;
     }
-    
+
     p = tmpbuf;
     s = tmpbuf;
 
@@ -170,7 +194,7 @@ int chvprintf(BaseSequentialStream *chp, const char *fmt, va_list ap) {
       fmt++;
       filler = '0';
     }
-    
+
     /* Width modifier.*/
     if ( *fmt == '*') {
       width = va_arg(ap, int);
@@ -193,7 +217,7 @@ int chvprintf(BaseSequentialStream *chp, const char *fmt, va_list ap) {
         }
       }
     }
-    
+
     /* Precision modifier.*/
     precision = 0;
     if (c == '.') {
@@ -216,7 +240,7 @@ int chvprintf(BaseSequentialStream *chp, const char *fmt, va_list ap) {
         }
       }
     }
-    
+
     /* Long modifier.*/
     if (c == 'l' || c == 'L') {
       is_long = true;
