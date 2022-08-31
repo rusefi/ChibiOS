@@ -32,9 +32,13 @@
 #include "chprintf.h"
 #include "memstreams.h"
 
+// For isnan()
+#include <math.h>
+
 #define MAX_FILLER 11
 #define FLOAT_PRECISION 9
 
+// returns pointer behind produced string
 static char *long_to_string_with_divisor(char *p,
                                          long num,
                                          unsigned radix,
@@ -80,6 +84,13 @@ static char *ftoa(char *p, double num, unsigned long precision) {
     10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000
   };
   long l;
+
+  if (isnan(num)) {
+        *p ++ = 'N';
+        *p ++ = 'a';
+        *p ++ = 'N';
+        return p;
+  }
 
   if ((precision == 0) || (precision > FLOAT_PRECISION)) {
     precision = FLOAT_PRECISION;
