@@ -35,6 +35,7 @@
 #define MAX_FILLER 11
 #define FLOAT_PRECISION 9
 
+// returns pointer behind produced string
 static char *long_to_string_with_divisor(char *p,
                                          long num,
                                          unsigned radix,
@@ -80,6 +81,18 @@ static char *ftoa(char *p, double num, unsigned long precision) {
     10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000
   };
   long l;
+
+#define rusefi_cisnan(f) (*(((int*) (&f))) == 0x7FC00000)
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+  if (rusefi_cisnan(num)) {
+#pragma GCC diagnostic pop
+        *p ++ = 'N';
+        *p ++ = 'a';
+        *p ++ = 'N';
+        return p;
+  }
 
   if ((precision == 0) || (precision > FLOAT_PRECISION)) {
     precision = FLOAT_PRECISION;
