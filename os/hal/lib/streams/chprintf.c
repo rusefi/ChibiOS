@@ -85,7 +85,10 @@ static const long pow10[FLOAT_PRECISION] = {
 static char *ftoa(char *p, float num, unsigned long precision) {
   long l;
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
   if (rusefi_cisnan(num)) {
+#pragma GCC diagnostic pop
         *p ++ = 'N';
         *p ++ = 'a';
         *p ++ = 'N';
