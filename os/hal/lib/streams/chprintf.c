@@ -80,21 +80,7 @@ static const long pow10[FLOAT_PRECISION] = {
     10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000
 };
 
-
-// rusEFI
-#if defined(__cplusplus) && defined(__OPTIMIZE__)
-#include <type_traits>
-// "g++ -O2" version, adds more strict type check and yet no "strict-aliasing" warnings!
-#define rusefi_cisnan(f) ({ \
-	static_assert(sizeof(f) == sizeof(int32_t)); \
-	union cisnanu_t { std::remove_reference_t<decltype(f)> __f; int32_t __i; } __cisnan_u = { f }; \
-	__cisnan_u.__i == 0x7FC00000; \
-})
-#else
-// "g++ -O0" or other C++/C compilers
 #define rusefi_cisnan(f) (*(((int*) (&f))) == 0x7FC00000)
-#endif /* __cplusplus && __OPTIMIZE__ */
-// end of rusEFI
 
 static char *ftoa(char *p, float num, unsigned long precision) {
   long l;
