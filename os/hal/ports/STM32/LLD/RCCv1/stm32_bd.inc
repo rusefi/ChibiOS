@@ -60,7 +60,13 @@ __STATIC_INLINE void bd_init(void) {
 
   /* Selectors.*/
   bdcr &= ~(STM32_RTCSEL_MASK | STM32_LSCOSEL_MASK);
-  bdcr |= STM32_RTCSEL | STM32_LSCOSEL;
+  bdcr |= STM32_LSCOSEL;
+
+#if STM32_LSE_ENABLED
+  bdcr |= (RCC->BDCR & RCC_BDCR_LSERDY) == 0 ? RUSEFI_STM32_LSE_WAIT_MAX_RTCSEL : STM32_RTCSEL;
+#else
+  bdcr |= STM32_RTCSEL;
+#endif
 
   /* Final settings.*/
   RCC->BDCR = bdcr;
