@@ -752,6 +752,21 @@ void stm32_clock_init(void) {
   /* Static clocks setup.*/
   hal_lld_set_static_clocks();
 
+#if STM32_LSE_ENABLED
+  int rusefiLseCounter = 0;
+  /* LSE activation.*/
+#if defined(STM32_LSE_BYPASS)
+  /* LSE Bypass.*/
+  RCC->BDCR |= STM32_LSEDRV | RCC_BDCR_LSEON | RCC_BDCR_LSEBYP;
+#else
+  /* No LSE Bypass.*/
+  RCC->BDCR |= STM32_LSEDRV | RCC_BDCR_LSEON;
+#endif
+  while (rusefiLseCounter++ < RUSEFI_STM32_LSE_WAIT_MAX
+          && (RCC->BDCR & RCC_BDCR_LSERDY) == 0)
+    ;                                       /* Waits until LSE is stable or times out.   */
+#endif
+
   /* Set flash WS's for SYSCLK source.*/
   flash_set_acr(FLASH_ACR_DBG_SWEN | FLASH_ACR_ICEN | FLASH_ACR_PRFTEN |
                 STM32_FLASHBITS);

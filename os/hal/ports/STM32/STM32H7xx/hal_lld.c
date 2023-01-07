@@ -68,6 +68,7 @@ static inline void init_bkp_domain(void) {
   }
 
 #if STM32_LSE_ENABLED
+  int rusefiLseCounter = 0;
 #if defined(STM32_LSE_BYPASS)
   /* LSE Bypass.*/
   RCC->BDCR |= STM32_LSEDRV | RCC_BDCR_LSEON | RCC_BDCR_LSEBYP;
@@ -75,8 +76,10 @@ static inline void init_bkp_domain(void) {
   /* No LSE Bypass.*/
   RCC->BDCR |= STM32_LSEDRV | RCC_BDCR_LSEON;
 #endif
-  while ((RCC->BDCR & RCC_BDCR_LSERDY) == 0)
-    ;                                       /* Waits until LSE is stable.   */
+  /* Waits until LSE is stable or times out. */
+  while ((!RUSEFI_STM32_LSE_WAIT_MAX || rusefiLseCounter++ < RUSEFI_STM32_LSE_WAIT_MAX)
+      && (RCC->BDCR & RCC_BDCR_LSERDY) == 0)
+    ;
 #endif
 
 #if HAL_USE_RTC
@@ -84,7 +87,11 @@ static inline void init_bkp_domain(void) {
      initialization.*/
   if ((RCC->BDCR & RCC_BDCR_RTCEN) == 0) {
     /* Selects clock source.*/
+#if STM32_LSE_ENABLED
+    RCC->BDCR |= (RCC->BDCR & RCC_BDCR_LSERDY) == 0 ? RUSEFI_STM32_LSE_WAIT_MAX_RTCSEL : STM32_RTCSEL;
+#else
     RCC->BDCR |= STM32_RTCSEL;
+#endif
 
     /* RTC clock enabled.*/
     RCC->BDCR |= RCC_BDCR_RTCEN;
