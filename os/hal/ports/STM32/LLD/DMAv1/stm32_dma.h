@@ -276,6 +276,11 @@
 #error "STM32_DMA_SUPPORTS_DMAMUX not defined in registry"
 #endif
 
+#if !defined(STM32_DMA_HAS_DMAMUXSEL)
+//#error "STM32_DMA_HAS_DMAMUXSEL not defined in registry"
+#define STM32_DMA_HAS_DMAMUXSEL FALSE
+#endif
+
 #if !defined(STM32_DMA_SUPPORTS_CSELR)
 #error "STM32_DMA_SUPPORTS_CSELR not defined in registry"
 #endif
