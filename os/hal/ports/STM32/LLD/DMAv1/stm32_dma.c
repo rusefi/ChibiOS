@@ -84,6 +84,11 @@
 #elif STM32_DMA_SUPPORTS_DMAMUX == TRUE
 
 #define DMAMUX1_CHANNEL(id)         (DMAMUX1_BASE + ((id) * 4U))
+#ifdef DMAMUX2_BASE
+#define DMAMUX2_CHANNEL(id)         (DMAMUX2_BASE + ((id) * 4U))
+#else
+#define DMAMUX2_CHANNEL(id)         DMAMUX1_CHANNEL((id) + STM32_DMA1_NUM_CHANNELS)
+#endif
 
 #if !defined(STM32G4XX)
 #define DMA1_CH1_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(0))
@@ -111,14 +116,14 @@
 #define DMA1_CH6_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(5))
 #define DMA1_CH7_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(6))
 #define DMA1_CH8_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(7))
-#define DMA2_CH1_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(8))
-#define DMA2_CH2_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(9))
-#define DMA2_CH3_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(10))
-#define DMA2_CH4_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(11))
-#define DMA2_CH5_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(12))
-#define DMA2_CH6_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(13))
-#define DMA2_CH7_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(14))
-#define DMA2_CH8_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX1_CHANNEL(15))
+#define DMA2_CH1_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX2_CHANNEL(0))
+#define DMA2_CH2_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX2_CHANNEL(1))
+#define DMA2_CH3_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX2_CHANNEL(2))
+#define DMA2_CH4_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX2_CHANNEL(3))
+#define DMA2_CH5_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX2_CHANNEL(4))
+#define DMA2_CH6_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX2_CHANNEL(5))
+#define DMA2_CH7_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX2_CHANNEL(6))
+#define DMA2_CH8_VARIANT            ((DMAMUX_Channel_TypeDef *)DMAMUX2_CHANNEL(7))
 #endif
 
 #else /* !(STM32_DMA_SUPPORTS_DMAMUX == TRUE) */
@@ -583,8 +588,14 @@ void dmaInit(void) {
     dma.streams[i].func = NULL;
   }
   DMA1->IFCR = 0xFFFFFFFFU;
+#if STM32_DMA_HAS_DMAMUXSEL == TRUE
+  DMA1->MUXSEL = 0x1;
+#endif
 #if STM32_DMA2_NUM_CHANNELS > 0
   DMA2->IFCR = 0xFFFFFFFFU;
+#if STM32_DMA_HAS_DMAMUXSEL == TRUE
+  DMA2->MUXSEL = 0x1;
+#endif
 #endif
 }
 
