@@ -216,12 +216,16 @@ typedef struct
   __IO uint32_t SQR1;   /*!< ADC regular sequence register 1,             Address offset: 0x2C */
   __IO uint32_t SQR2;   /*!< ADC regular sequence register 2,             Address offset: 0x30 */
   __IO uint32_t SQR3;   /*!< ADC regular sequence register 3,             Address offset: 0x34 */
-  __IO uint32_t JSQR;   /*!< ADC injected sequence register,              Address offset: 0x38*/
+  __IO uint32_t JSQR;   /*!< ADC injected sequence register,              Address offset: 0x38 */
   __IO uint32_t JDR1;   /*!< ADC injected data register 1,                Address offset: 0x3C */
   __IO uint32_t JDR2;   /*!< ADC injected data register 2,                Address offset: 0x40 */
   __IO uint32_t JDR3;   /*!< ADC injected data register 3,                Address offset: 0x44 */
   __IO uint32_t JDR4;   /*!< ADC injected data register 4,                Address offset: 0x48 */
   __IO uint32_t DR;     /*!< ADC regular data register,                   Address offset: 0x4C */
+  uint32_t RESERVED0[0x30 / 4];     /*!< Reserved,                                0x04c - 0x7F */
+  __IO uint32_t OVSP;   /*!< ADC oversampling register,                   Address offset: 0x80 */
+  uint32_t RESERVED1[0x30 / 4];     /*!< Reserved,                                0x084 - 0xB3 */
+  __IO uint32_t CALVAL; /*!< ADC calibration value register,              Address offset: 0x80 */
 } ADC_TypeDef;
 
 typedef struct
