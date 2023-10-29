@@ -256,6 +256,10 @@
 #error "ADC driver activated but no ADC peripheral assigned"
 #endif
 
+#if STM32_DMA_SUPPORTS_DMAMUX
+
+#else /* !STM32_DMA_SUPPORTS_DMAMUX */
+
 #if STM32_ADC_USE_ADC1 &&                                                   \
     !STM32_DMA_IS_VALID_ID(STM32_ADC_ADC1_DMA_STREAM, STM32_ADC1_DMA_MSK)
 #error "invalid DMA stream associated to ADC1"
@@ -270,6 +274,8 @@
     !STM32_DMA_IS_VALID_ID(STM32_ADC_ADC3_DMA_STREAM, STM32_ADC3_DMA_MSK)
 #error "invalid DMA stream associated to ADC3"
 #endif
+
+#endif /* !STM32_DMA_SUPPORTS_DMAMUX */
 
 /* ADC clock related settings and checks.*/
 #if STM32_ADC_ADCPRE == ADC_CCR_ADCPRE_DIV2

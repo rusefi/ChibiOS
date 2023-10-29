@@ -216,12 +216,16 @@ typedef struct
   __IO uint32_t SQR1;   /*!< ADC regular sequence register 1,             Address offset: 0x2C */
   __IO uint32_t SQR2;   /*!< ADC regular sequence register 2,             Address offset: 0x30 */
   __IO uint32_t SQR3;   /*!< ADC regular sequence register 3,             Address offset: 0x34 */
-  __IO uint32_t JSQR;   /*!< ADC injected sequence register,              Address offset: 0x38*/
+  __IO uint32_t JSQR;   /*!< ADC injected sequence register,              Address offset: 0x38 */
   __IO uint32_t JDR1;   /*!< ADC injected data register 1,                Address offset: 0x3C */
   __IO uint32_t JDR2;   /*!< ADC injected data register 2,                Address offset: 0x40 */
   __IO uint32_t JDR3;   /*!< ADC injected data register 3,                Address offset: 0x44 */
   __IO uint32_t JDR4;   /*!< ADC injected data register 4,                Address offset: 0x48 */
   __IO uint32_t DR;     /*!< ADC regular data register,                   Address offset: 0x4C */
+  uint32_t RESERVED0[0x30 / 4];     /*!< Reserved,                                0x04c - 0x7F */
+  __IO uint32_t OVSP;   /*!< ADC oversampling register,                   Address offset: 0x80 */
+  uint32_t RESERVED1[0x30 / 4];     /*!< Reserved,                                0x084 - 0xB3 */
+  __IO uint32_t CALVAL; /*!< ADC calibration value register,              Address offset: 0x80 */
 } ADC_TypeDef;
 
 typedef struct
@@ -369,20 +373,29 @@ typedef struct
 
 typedef struct
 {
-  __IO uint32_t CR;     /*!< DMA stream x configuration register      */
-  __IO uint32_t NDTR;   /*!< DMA stream x number of data register     */
-  __IO uint32_t PAR;    /*!< DMA stream x peripheral address register */
-  __IO uint32_t M0AR;   /*!< DMA stream x memory 0 address register   */
-  __IO uint32_t M1AR;   /*!< DMA stream x memory 1 address register   */
-  __IO uint32_t FCR;    /*!< DMA stream x FIFO control register       */
-} DMA_Stream_TypeDef;
+  __IO uint32_t CCR;    /*!< DMA channel x configuration register        */
+  __IO uint32_t CNDTR;  /*!< DMA channel x number of data register       */
+  __IO uint32_t CPAR;   /*!< DMA channel x peripheral address register   */
+  __IO uint32_t CMAR;   /*!< DMA channel x memory address register       */
+} DMA_Channel_TypeDef;
+
+/**
+  * @brief DMA Multiplexer
+  */
 
 typedef struct
 {
-  __IO uint32_t LISR;   /*!< DMA low interrupt status register,      Address offset: 0x00 */
-  __IO uint32_t HISR;   /*!< DMA high interrupt status register,     Address offset: 0x04 */
-  __IO uint32_t LIFCR;  /*!< DMA low interrupt flag clear register,  Address offset: 0x08 */
-  __IO uint32_t HIFCR;  /*!< DMA high interrupt flag clear register, Address offset: 0x0C */
+  __IO uint32_t   CCR;       /*!< DMA Multiplexer Channel x Control Register    Address offset: 0x0004 * (channel x) */
+}DMAMUX_Channel_TypeDef;
+
+typedef struct
+{
+  __IO uint32_t ISR;    /*!< DMA interrupt status register,                 Address offset: 0x00 */
+  __IO uint32_t IFCR;   /*!< DMA interrupt flag clear register,             Address offset: 0x04 */
+  DMA_Channel_TypeDef ch[7];
+  __IO uint32_t MUXSEL; /*!< DMA MUX selection register,                    Address offset: 0x100 */
+  DMAMUX_Channel_TypeDef MUXC[7];
+  DMAMUX_Channel_TypeDef MUXG[4];
 } DMA_TypeDef;
 
 /** 
@@ -1176,24 +1189,24 @@ typedef struct
 #define CRC_BASE              (AHB1PERIPH_BASE + 0x3000U)
 #define RCC_BASE              (AHB1PERIPH_BASE + 0x3800U)
 #define FLASH_R_BASE          (AHB1PERIPH_BASE + 0x3C00U)
-#define DMA1_BASE             (AHB1PERIPH_BASE + 0x6000U)
-#define DMA1_Stream0_BASE     (DMA1_BASE + 0x010U)
-#define DMA1_Stream1_BASE     (DMA1_BASE + 0x028U)
-#define DMA1_Stream2_BASE     (DMA1_BASE + 0x040U)
-#define DMA1_Stream3_BASE     (DMA1_BASE + 0x058U)
-#define DMA1_Stream4_BASE     (DMA1_BASE + 0x070U)
-#define DMA1_Stream5_BASE     (DMA1_BASE + 0x088U)
-#define DMA1_Stream6_BASE     (DMA1_BASE + 0x0A0U)
-#define DMA1_Stream7_BASE     (DMA1_BASE + 0x0B8U)
-#define DMA2_BASE             (AHB1PERIPH_BASE + 0x6400U)
-#define DMA2_Stream0_BASE     (DMA2_BASE + 0x010U)
-#define DMA2_Stream1_BASE     (DMA2_BASE + 0x028U)
-#define DMA2_Stream2_BASE     (DMA2_BASE + 0x040U)
-#define DMA2_Stream3_BASE     (DMA2_BASE + 0x058U)
-#define DMA2_Stream4_BASE     (DMA2_BASE + 0x070U)
-#define DMA2_Stream5_BASE     (DMA2_BASE + 0x088U)
-#define DMA2_Stream6_BASE     (DMA2_BASE + 0x0A0U)
-#define DMA2_Stream7_BASE     (DMA2_BASE + 0x0B8U)
+#define DMA1_BASE             (AHB1PERIPH_BASE + 0x6400U)
+#define DMA1_Channel1_BASE    (DMA1_BASE + 0x008U)
+#define DMA1_Channel2_BASE    (DMA1_BASE + 0x01CU)
+#define DMA1_Channel3_BASE    (DMA1_BASE + 0x030U)
+#define DMA1_Channel4_BASE    (DMA1_BASE + 0x044U)
+#define DMA1_Channel5_BASE    (DMA1_BASE + 0x058U)
+#define DMA1_Channel6_BASE    (DMA1_BASE + 0x06CU)
+#define DMA1_Channel7_BASE    (DMA1_BASE + 0x080U)
+#define DMAMUX1_BASE          (DMA1_BASE + 0x104U)
+#define DMA2_BASE             (AHB1PERIPH_BASE + 0x6600U)
+#define DMA2_Channel1_BASE    (DMA2_BASE + 0x008U)
+#define DMA2_Channel2_BASE    (DMA2_BASE + 0x01CU)
+#define DMA2_Channel3_BASE    (DMA2_BASE + 0x030U)
+#define DMA2_Channel4_BASE    (DMA2_BASE + 0x044U)
+#define DMA2_Channel5_BASE    (DMA2_BASE + 0x058U)
+#define DMA2_Channel6_BASE    (DMA2_BASE + 0x06CU)
+#define DMA2_Channel7_BASE    (DMA2_BASE + 0x080U)
+#define DMAMUX2_BASE          (DMA2_BASE + 0x104U)
 #define ETH_BASE              (AHB1PERIPH_BASE + 0x8000U)
 #define ETH_MAC_BASE          (ETH_BASE)
 #define ETH_MMC_BASE          (ETH_BASE + 0x0100U)
@@ -1313,23 +1326,21 @@ typedef struct
 #define RCC                 ((RCC_TypeDef *) RCC_BASE)
 #define FLASH               ((FLASH_TypeDef *) FLASH_R_BASE)
 #define DMA1                ((DMA_TypeDef *) DMA1_BASE)
-#define DMA1_Stream0        ((DMA_Stream_TypeDef *) DMA1_Stream0_BASE)
-#define DMA1_Stream1        ((DMA_Stream_TypeDef *) DMA1_Stream1_BASE)
-#define DMA1_Stream2        ((DMA_Stream_TypeDef *) DMA1_Stream2_BASE)
-#define DMA1_Stream3        ((DMA_Stream_TypeDef *) DMA1_Stream3_BASE)
-#define DMA1_Stream4        ((DMA_Stream_TypeDef *) DMA1_Stream4_BASE)
-#define DMA1_Stream5        ((DMA_Stream_TypeDef *) DMA1_Stream5_BASE)
-#define DMA1_Stream6        ((DMA_Stream_TypeDef *) DMA1_Stream6_BASE)
-#define DMA1_Stream7        ((DMA_Stream_TypeDef *) DMA1_Stream7_BASE)
+#define DMA1_Channel1       ((DMA_Channel_TypeDef *) DMA1_Channel1_BASE)
+#define DMA1_Channel2       ((DMA_Channel_TypeDef *) DMA1_Channel2_BASE)
+#define DMA1_Channel3       ((DMA_Channel_TypeDef *) DMA1_Channel3_BASE)
+#define DMA1_Channel4       ((DMA_Channel_TypeDef *) DMA1_Channel4_BASE)
+#define DMA1_Channel5       ((DMA_Channel_TypeDef *) DMA1_Channel5_BASE)
+#define DMA1_Channel6       ((DMA_Channel_TypeDef *) DMA1_Channel6_BASE)
+#define DMA1_Channel7       ((DMA_Channel_TypeDef *) DMA1_Channel7_BASE)
 #define DMA2                ((DMA_TypeDef *) DMA2_BASE)
-#define DMA2_Stream0        ((DMA_Stream_TypeDef *) DMA2_Stream0_BASE)
-#define DMA2_Stream1        ((DMA_Stream_TypeDef *) DMA2_Stream1_BASE)
-#define DMA2_Stream2        ((DMA_Stream_TypeDef *) DMA2_Stream2_BASE)
-#define DMA2_Stream3        ((DMA_Stream_TypeDef *) DMA2_Stream3_BASE)
-#define DMA2_Stream4        ((DMA_Stream_TypeDef *) DMA2_Stream4_BASE)
-#define DMA2_Stream5        ((DMA_Stream_TypeDef *) DMA2_Stream5_BASE)
-#define DMA2_Stream6        ((DMA_Stream_TypeDef *) DMA2_Stream6_BASE)
-#define DMA2_Stream7        ((DMA_Stream_TypeDef *) DMA2_Stream7_BASE)
+#define DMA2_Channel1       ((DMA_Channel_TypeDef *) DMA2_Channel1_BASE)
+#define DMA2_Channel2       ((DMA_Channel_TypeDef *) DMA2_Channel2_BASE)
+#define DMA2_Channel3       ((DMA_Channel_TypeDef *) DMA2_Channel3_BASE)
+#define DMA2_Channel4       ((DMA_Channel_TypeDef *) DMA2_Channel4_BASE)
+#define DMA2_Channel5       ((DMA_Channel_TypeDef *) DMA2_Channel5_BASE)
+#define DMA2_Channel6       ((DMA_Channel_TypeDef *) DMA2_Channel6_BASE)
+#define DMA2_Channel7       ((DMA_Channel_TypeDef *) DMA2_Channel7_BASE)
 #define ETH                 ((ETH_TypeDef *) ETH_BASE)  
 #define DMA2D               ((DMA2D_TypeDef *)DMA2D_BASE)
 #define DCMI                ((DCMI_TypeDef *) DCMI_BASE)
@@ -6107,391 +6118,220 @@ typedef struct
 
 /******************************************************************************/
 /*                                                                            */
-/*                             DMA Controller                                 */
+/*                           DMA Controller (DMA)                             */
 /*                                                                            */
 /******************************************************************************/
-/********************  Bits definition for DMA_SxCR register  *****************/
-#define DMA_SxCR_CHSEL_Pos       (25U)                                         
-#define DMA_SxCR_CHSEL_Msk       (0x7U << DMA_SxCR_CHSEL_Pos)                  /*!< 0x0E000000 */
-#define DMA_SxCR_CHSEL           DMA_SxCR_CHSEL_Msk                            
-#define DMA_SxCR_CHSEL_0         0x02000000U                                   
-#define DMA_SxCR_CHSEL_1         0x04000000U                                   
-#define DMA_SxCR_CHSEL_2         0x08000000U                                   
-#define DMA_SxCR_MBURST_Pos      (23U)                                         
-#define DMA_SxCR_MBURST_Msk      (0x3U << DMA_SxCR_MBURST_Pos)                 /*!< 0x01800000 */
-#define DMA_SxCR_MBURST          DMA_SxCR_MBURST_Msk                           
-#define DMA_SxCR_MBURST_0        (0x1U << DMA_SxCR_MBURST_Pos)                 /*!< 0x00800000 */
-#define DMA_SxCR_MBURST_1        (0x2U << DMA_SxCR_MBURST_Pos)                 /*!< 0x01000000 */
-#define DMA_SxCR_PBURST_Pos      (21U)                                         
-#define DMA_SxCR_PBURST_Msk      (0x3U << DMA_SxCR_PBURST_Pos)                 /*!< 0x00600000 */
-#define DMA_SxCR_PBURST          DMA_SxCR_PBURST_Msk                           
-#define DMA_SxCR_PBURST_0        (0x1U << DMA_SxCR_PBURST_Pos)                 /*!< 0x00200000 */
-#define DMA_SxCR_PBURST_1        (0x2U << DMA_SxCR_PBURST_Pos)                 /*!< 0x00400000 */
-#define DMA_SxCR_CT_Pos          (19U)                                         
-#define DMA_SxCR_CT_Msk          (0x1U << DMA_SxCR_CT_Pos)                     /*!< 0x00080000 */
-#define DMA_SxCR_CT              DMA_SxCR_CT_Msk                               
-#define DMA_SxCR_DBM_Pos         (18U)                                         
-#define DMA_SxCR_DBM_Msk         (0x1U << DMA_SxCR_DBM_Pos)                    /*!< 0x00040000 */
-#define DMA_SxCR_DBM             DMA_SxCR_DBM_Msk                              
-#define DMA_SxCR_PL_Pos          (16U)                                         
-#define DMA_SxCR_PL_Msk          (0x3U << DMA_SxCR_PL_Pos)                     /*!< 0x00030000 */
-#define DMA_SxCR_PL              DMA_SxCR_PL_Msk                               
-#define DMA_SxCR_PL_0            (0x1U << DMA_SxCR_PL_Pos)                     /*!< 0x00010000 */
-#define DMA_SxCR_PL_1            (0x2U << DMA_SxCR_PL_Pos)                     /*!< 0x00020000 */
-#define DMA_SxCR_PINCOS_Pos      (15U)                                         
-#define DMA_SxCR_PINCOS_Msk      (0x1U << DMA_SxCR_PINCOS_Pos)                 /*!< 0x00008000 */
-#define DMA_SxCR_PINCOS          DMA_SxCR_PINCOS_Msk                           
-#define DMA_SxCR_MSIZE_Pos       (13U)                                         
-#define DMA_SxCR_MSIZE_Msk       (0x3U << DMA_SxCR_MSIZE_Pos)                  /*!< 0x00006000 */
-#define DMA_SxCR_MSIZE           DMA_SxCR_MSIZE_Msk                            
-#define DMA_SxCR_MSIZE_0         (0x1U << DMA_SxCR_MSIZE_Pos)                  /*!< 0x00002000 */
-#define DMA_SxCR_MSIZE_1         (0x2U << DMA_SxCR_MSIZE_Pos)                  /*!< 0x00004000 */
-#define DMA_SxCR_PSIZE_Pos       (11U)                                         
-#define DMA_SxCR_PSIZE_Msk       (0x3U << DMA_SxCR_PSIZE_Pos)                  /*!< 0x00001800 */
-#define DMA_SxCR_PSIZE           DMA_SxCR_PSIZE_Msk                            
-#define DMA_SxCR_PSIZE_0         (0x1U << DMA_SxCR_PSIZE_Pos)                  /*!< 0x00000800 */
-#define DMA_SxCR_PSIZE_1         (0x2U << DMA_SxCR_PSIZE_Pos)                  /*!< 0x00001000 */
-#define DMA_SxCR_MINC_Pos        (10U)                                         
-#define DMA_SxCR_MINC_Msk        (0x1U << DMA_SxCR_MINC_Pos)                   /*!< 0x00000400 */
-#define DMA_SxCR_MINC            DMA_SxCR_MINC_Msk                             
-#define DMA_SxCR_PINC_Pos        (9U)                                          
-#define DMA_SxCR_PINC_Msk        (0x1U << DMA_SxCR_PINC_Pos)                   /*!< 0x00000200 */
-#define DMA_SxCR_PINC            DMA_SxCR_PINC_Msk                             
-#define DMA_SxCR_CIRC_Pos        (8U)                                          
-#define DMA_SxCR_CIRC_Msk        (0x1U << DMA_SxCR_CIRC_Pos)                   /*!< 0x00000100 */
-#define DMA_SxCR_CIRC            DMA_SxCR_CIRC_Msk                             
-#define DMA_SxCR_DIR_Pos         (6U)                                          
-#define DMA_SxCR_DIR_Msk         (0x3U << DMA_SxCR_DIR_Pos)                    /*!< 0x000000C0 */
-#define DMA_SxCR_DIR             DMA_SxCR_DIR_Msk                              
-#define DMA_SxCR_DIR_0           (0x1U << DMA_SxCR_DIR_Pos)                    /*!< 0x00000040 */
-#define DMA_SxCR_DIR_1           (0x2U << DMA_SxCR_DIR_Pos)                    /*!< 0x00000080 */
-#define DMA_SxCR_PFCTRL_Pos      (5U)                                          
-#define DMA_SxCR_PFCTRL_Msk      (0x1U << DMA_SxCR_PFCTRL_Pos)                 /*!< 0x00000020 */
-#define DMA_SxCR_PFCTRL          DMA_SxCR_PFCTRL_Msk                           
-#define DMA_SxCR_TCIE_Pos        (4U)                                          
-#define DMA_SxCR_TCIE_Msk        (0x1U << DMA_SxCR_TCIE_Pos)                   /*!< 0x00000010 */
-#define DMA_SxCR_TCIE            DMA_SxCR_TCIE_Msk                             
-#define DMA_SxCR_HTIE_Pos        (3U)                                          
-#define DMA_SxCR_HTIE_Msk        (0x1U << DMA_SxCR_HTIE_Pos)                   /*!< 0x00000008 */
-#define DMA_SxCR_HTIE            DMA_SxCR_HTIE_Msk                             
-#define DMA_SxCR_TEIE_Pos        (2U)                                          
-#define DMA_SxCR_TEIE_Msk        (0x1U << DMA_SxCR_TEIE_Pos)                   /*!< 0x00000004 */
-#define DMA_SxCR_TEIE            DMA_SxCR_TEIE_Msk                             
-#define DMA_SxCR_DMEIE_Pos       (1U)                                          
-#define DMA_SxCR_DMEIE_Msk       (0x1U << DMA_SxCR_DMEIE_Pos)                  /*!< 0x00000002 */
-#define DMA_SxCR_DMEIE           DMA_SxCR_DMEIE_Msk                            
-#define DMA_SxCR_EN_Pos          (0U)                                          
-#define DMA_SxCR_EN_Msk          (0x1U << DMA_SxCR_EN_Pos)                     /*!< 0x00000001 */
-#define DMA_SxCR_EN              DMA_SxCR_EN_Msk                               
 
-/* Legacy defines */
-#define DMA_SxCR_ACK_Pos         (20U)                                         
-#define DMA_SxCR_ACK_Msk         (0x1U << DMA_SxCR_ACK_Pos)                    /*!< 0x00100000 */
-#define DMA_SxCR_ACK             DMA_SxCR_ACK_Msk                              
+/*******************  Bit definition for DMA_ISR register  ********************/
+#define DMA_ISR_GIF1_Pos       (0U)
+#define DMA_ISR_GIF1_Msk       (0x1UL << DMA_ISR_GIF1_Pos)                     /*!< 0x00000001 */
+#define DMA_ISR_GIF1           DMA_ISR_GIF1_Msk                                /*!< Channel 1 Global interrupt flag */
+#define DMA_ISR_TCIF1_Pos      (1U)
+#define DMA_ISR_TCIF1_Msk      (0x1UL << DMA_ISR_TCIF1_Pos)                    /*!< 0x00000002 */
+#define DMA_ISR_TCIF1          DMA_ISR_TCIF1_Msk                               /*!< Channel 1 Transfer Complete flag */
+#define DMA_ISR_HTIF1_Pos      (2U)
+#define DMA_ISR_HTIF1_Msk      (0x1UL << DMA_ISR_HTIF1_Pos)                    /*!< 0x00000004 */
+#define DMA_ISR_HTIF1          DMA_ISR_HTIF1_Msk                               /*!< Channel 1 Half Transfer flag */
+#define DMA_ISR_TEIF1_Pos      (3U)
+#define DMA_ISR_TEIF1_Msk      (0x1UL << DMA_ISR_TEIF1_Pos)                    /*!< 0x00000008 */
+#define DMA_ISR_TEIF1          DMA_ISR_TEIF1_Msk                               /*!< Channel 1 Transfer Error flag */
+#define DMA_ISR_GIF2_Pos       (4U)
+#define DMA_ISR_GIF2_Msk       (0x1UL << DMA_ISR_GIF2_Pos)                     /*!< 0x00000010 */
+#define DMA_ISR_GIF2           DMA_ISR_GIF2_Msk                                /*!< Channel 2 Global interrupt flag */
+#define DMA_ISR_TCIF2_Pos      (5U)
+#define DMA_ISR_TCIF2_Msk      (0x1UL << DMA_ISR_TCIF2_Pos)                    /*!< 0x00000020 */
+#define DMA_ISR_TCIF2          DMA_ISR_TCIF2_Msk                               /*!< Channel 2 Transfer Complete flag */
+#define DMA_ISR_HTIF2_Pos      (6U)
+#define DMA_ISR_HTIF2_Msk      (0x1UL << DMA_ISR_HTIF2_Pos)                    /*!< 0x00000040 */
+#define DMA_ISR_HTIF2          DMA_ISR_HTIF2_Msk                               /*!< Channel 2 Half Transfer flag */
+#define DMA_ISR_TEIF2_Pos      (7U)
+#define DMA_ISR_TEIF2_Msk      (0x1UL << DMA_ISR_TEIF2_Pos)                    /*!< 0x00000080 */
+#define DMA_ISR_TEIF2          DMA_ISR_TEIF2_Msk                               /*!< Channel 2 Transfer Error flag */
+#define DMA_ISR_GIF3_Pos       (8U)
+#define DMA_ISR_GIF3_Msk       (0x1UL << DMA_ISR_GIF3_Pos)                     /*!< 0x00000100 */
+#define DMA_ISR_GIF3           DMA_ISR_GIF3_Msk                                /*!< Channel 3 Global interrupt flag */
+#define DMA_ISR_TCIF3_Pos      (9U)
+#define DMA_ISR_TCIF3_Msk      (0x1UL << DMA_ISR_TCIF3_Pos)                    /*!< 0x00000200 */
+#define DMA_ISR_TCIF3          DMA_ISR_TCIF3_Msk                               /*!< Channel 3 Transfer Complete flag */
+#define DMA_ISR_HTIF3_Pos      (10U)
+#define DMA_ISR_HTIF3_Msk      (0x1UL << DMA_ISR_HTIF3_Pos)                    /*!< 0x00000400 */
+#define DMA_ISR_HTIF3          DMA_ISR_HTIF3_Msk                               /*!< Channel 3 Half Transfer flag */
+#define DMA_ISR_TEIF3_Pos      (11U)
+#define DMA_ISR_TEIF3_Msk      (0x1UL << DMA_ISR_TEIF3_Pos)                    /*!< 0x00000800 */
+#define DMA_ISR_TEIF3          DMA_ISR_TEIF3_Msk                               /*!< Channel 3 Transfer Error flag */
+#define DMA_ISR_GIF4_Pos       (12U)
+#define DMA_ISR_GIF4_Msk       (0x1UL << DMA_ISR_GIF4_Pos)                     /*!< 0x00001000 */
+#define DMA_ISR_GIF4           DMA_ISR_GIF4_Msk                                /*!< Channel 4 Global interrupt flag */
+#define DMA_ISR_TCIF4_Pos      (13U)
+#define DMA_ISR_TCIF4_Msk      (0x1UL << DMA_ISR_TCIF4_Pos)                    /*!< 0x00002000 */
+#define DMA_ISR_TCIF4          DMA_ISR_TCIF4_Msk                               /*!< Channel 4 Transfer Complete flag */
+#define DMA_ISR_HTIF4_Pos      (14U)
+#define DMA_ISR_HTIF4_Msk      (0x1UL << DMA_ISR_HTIF4_Pos)                    /*!< 0x00004000 */
+#define DMA_ISR_HTIF4          DMA_ISR_HTIF4_Msk                               /*!< Channel 4 Half Transfer flag */
+#define DMA_ISR_TEIF4_Pos      (15U)
+#define DMA_ISR_TEIF4_Msk      (0x1UL << DMA_ISR_TEIF4_Pos)                    /*!< 0x00008000 */
+#define DMA_ISR_TEIF4          DMA_ISR_TEIF4_Msk                               /*!< Channel 4 Transfer Error flag */
+#define DMA_ISR_GIF5_Pos       (16U)
+#define DMA_ISR_GIF5_Msk       (0x1UL << DMA_ISR_GIF5_Pos)                     /*!< 0x00010000 */
+#define DMA_ISR_GIF5           DMA_ISR_GIF5_Msk                                /*!< Channel 5 Global interrupt flag */
+#define DMA_ISR_TCIF5_Pos      (17U)
+#define DMA_ISR_TCIF5_Msk      (0x1UL << DMA_ISR_TCIF5_Pos)                    /*!< 0x00020000 */
+#define DMA_ISR_TCIF5          DMA_ISR_TCIF5_Msk                               /*!< Channel 5 Transfer Complete flag */
+#define DMA_ISR_HTIF5_Pos      (18U)
+#define DMA_ISR_HTIF5_Msk      (0x1UL << DMA_ISR_HTIF5_Pos)                    /*!< 0x00040000 */
+#define DMA_ISR_HTIF5          DMA_ISR_HTIF5_Msk                               /*!< Channel 5 Half Transfer flag */
+#define DMA_ISR_TEIF5_Pos      (19U)
+#define DMA_ISR_TEIF5_Msk      (0x1UL << DMA_ISR_TEIF5_Pos)                    /*!< 0x00080000 */
+#define DMA_ISR_TEIF5          DMA_ISR_TEIF5_Msk                               /*!< Channel 5 Transfer Error flag */
+#define DMA_ISR_GIF6_Pos       (20U)
+#define DMA_ISR_GIF6_Msk       (0x1UL << DMA_ISR_GIF6_Pos)                     /*!< 0x00100000 */
+#define DMA_ISR_GIF6           DMA_ISR_GIF6_Msk                                /*!< Channel 6 Global interrupt flag */
+#define DMA_ISR_TCIF6_Pos      (21U)
+#define DMA_ISR_TCIF6_Msk      (0x1UL << DMA_ISR_TCIF6_Pos)                    /*!< 0x00200000 */
+#define DMA_ISR_TCIF6          DMA_ISR_TCIF6_Msk                               /*!< Channel 6 Transfer Complete flag */
+#define DMA_ISR_HTIF6_Pos      (22U)
+#define DMA_ISR_HTIF6_Msk      (0x1UL << DMA_ISR_HTIF6_Pos)                    /*!< 0x00400000 */
+#define DMA_ISR_HTIF6          DMA_ISR_HTIF6_Msk                               /*!< Channel 6 Half Transfer flag */
+#define DMA_ISR_TEIF6_Pos      (23U)
+#define DMA_ISR_TEIF6_Msk      (0x1UL << DMA_ISR_TEIF6_Pos)                    /*!< 0x00800000 */
+#define DMA_ISR_TEIF6          DMA_ISR_TEIF6_Msk                               /*!< Channel 6 Transfer Error flag */
 
-/********************  Bits definition for DMA_SxCNDTR register  **************/
-#define DMA_SxNDT_Pos            (0U)                                          
-#define DMA_SxNDT_Msk            (0xFFFFU << DMA_SxNDT_Pos)                    /*!< 0x0000FFFF */
-#define DMA_SxNDT                DMA_SxNDT_Msk                                 
-#define DMA_SxNDT_0              (0x0001U << DMA_SxNDT_Pos)                    /*!< 0x00000001 */
-#define DMA_SxNDT_1              (0x0002U << DMA_SxNDT_Pos)                    /*!< 0x00000002 */
-#define DMA_SxNDT_2              (0x0004U << DMA_SxNDT_Pos)                    /*!< 0x00000004 */
-#define DMA_SxNDT_3              (0x0008U << DMA_SxNDT_Pos)                    /*!< 0x00000008 */
-#define DMA_SxNDT_4              (0x0010U << DMA_SxNDT_Pos)                    /*!< 0x00000010 */
-#define DMA_SxNDT_5              (0x0020U << DMA_SxNDT_Pos)                    /*!< 0x00000020 */
-#define DMA_SxNDT_6              (0x0040U << DMA_SxNDT_Pos)                    /*!< 0x00000040 */
-#define DMA_SxNDT_7              (0x0080U << DMA_SxNDT_Pos)                    /*!< 0x00000080 */
-#define DMA_SxNDT_8              (0x0100U << DMA_SxNDT_Pos)                    /*!< 0x00000100 */
-#define DMA_SxNDT_9              (0x0200U << DMA_SxNDT_Pos)                    /*!< 0x00000200 */
-#define DMA_SxNDT_10             (0x0400U << DMA_SxNDT_Pos)                    /*!< 0x00000400 */
-#define DMA_SxNDT_11             (0x0800U << DMA_SxNDT_Pos)                    /*!< 0x00000800 */
-#define DMA_SxNDT_12             (0x1000U << DMA_SxNDT_Pos)                    /*!< 0x00001000 */
-#define DMA_SxNDT_13             (0x2000U << DMA_SxNDT_Pos)                    /*!< 0x00002000 */
-#define DMA_SxNDT_14             (0x4000U << DMA_SxNDT_Pos)                    /*!< 0x00004000 */
-#define DMA_SxNDT_15             (0x8000U << DMA_SxNDT_Pos)                    /*!< 0x00008000 */
+/*******************  Bit definition for DMA_IFCR register  *******************/
+#define DMA_IFCR_CGIF1_Pos     (0U)
+#define DMA_IFCR_CGIF1_Msk     (0x1UL << DMA_IFCR_CGIF1_Pos)                   /*!< 0x00000001 */
+#define DMA_IFCR_CGIF1         DMA_IFCR_CGIF1_Msk                              /*!< Channel 1 Global interrupt clearr */
+#define DMA_IFCR_CTCIF1_Pos    (1U)
+#define DMA_IFCR_CTCIF1_Msk    (0x1UL << DMA_IFCR_CTCIF1_Pos)                  /*!< 0x00000002 */
+#define DMA_IFCR_CTCIF1        DMA_IFCR_CTCIF1_Msk                             /*!< Channel 1 Transfer Complete clear */
+#define DMA_IFCR_CHTIF1_Pos    (2U)
+#define DMA_IFCR_CHTIF1_Msk    (0x1UL << DMA_IFCR_CHTIF1_Pos)                  /*!< 0x00000004 */
+#define DMA_IFCR_CHTIF1        DMA_IFCR_CHTIF1_Msk                             /*!< Channel 1 Half Transfer clear */
+#define DMA_IFCR_CTEIF1_Pos    (3U)
+#define DMA_IFCR_CTEIF1_Msk    (0x1UL << DMA_IFCR_CTEIF1_Pos)                  /*!< 0x00000008 */
+#define DMA_IFCR_CTEIF1        DMA_IFCR_CTEIF1_Msk                             /*!< Channel 1 Transfer Error clear */
+#define DMA_IFCR_CGIF2_Pos     (4U)
+#define DMA_IFCR_CGIF2_Msk     (0x1UL << DMA_IFCR_CGIF2_Pos)                   /*!< 0x00000010 */
+#define DMA_IFCR_CGIF2         DMA_IFCR_CGIF2_Msk                              /*!< Channel 2 Global interrupt clear */
+#define DMA_IFCR_CTCIF2_Pos    (5U)
+#define DMA_IFCR_CTCIF2_Msk    (0x1UL << DMA_IFCR_CTCIF2_Pos)                  /*!< 0x00000020 */
+#define DMA_IFCR_CTCIF2        DMA_IFCR_CTCIF2_Msk                             /*!< Channel 2 Transfer Complete clear */
+#define DMA_IFCR_CHTIF2_Pos    (6U)
+#define DMA_IFCR_CHTIF2_Msk    (0x1UL << DMA_IFCR_CHTIF2_Pos)                  /*!< 0x00000040 */
+#define DMA_IFCR_CHTIF2        DMA_IFCR_CHTIF2_Msk                             /*!< Channel 2 Half Transfer clear */
+#define DMA_IFCR_CTEIF2_Pos    (7U)
+#define DMA_IFCR_CTEIF2_Msk    (0x1UL << DMA_IFCR_CTEIF2_Pos)                  /*!< 0x00000080 */
+#define DMA_IFCR_CTEIF2        DMA_IFCR_CTEIF2_Msk                             /*!< Channel 2 Transfer Error clear */
+#define DMA_IFCR_CGIF3_Pos     (8U)
+#define DMA_IFCR_CGIF3_Msk     (0x1UL << DMA_IFCR_CGIF3_Pos)                   /*!< 0x00000100 */
+#define DMA_IFCR_CGIF3         DMA_IFCR_CGIF3_Msk                              /*!< Channel 3 Global interrupt clear */
+#define DMA_IFCR_CTCIF3_Pos    (9U)
+#define DMA_IFCR_CTCIF3_Msk    (0x1UL << DMA_IFCR_CTCIF3_Pos)                  /*!< 0x00000200 */
+#define DMA_IFCR_CTCIF3        DMA_IFCR_CTCIF3_Msk                             /*!< Channel 3 Transfer Complete clear */
+#define DMA_IFCR_CHTIF3_Pos    (10U)
+#define DMA_IFCR_CHTIF3_Msk    (0x1UL << DMA_IFCR_CHTIF3_Pos)                  /*!< 0x00000400 */
+#define DMA_IFCR_CHTIF3        DMA_IFCR_CHTIF3_Msk                             /*!< Channel 3 Half Transfer clear */
+#define DMA_IFCR_CTEIF3_Pos    (11U)
+#define DMA_IFCR_CTEIF3_Msk    (0x1UL << DMA_IFCR_CTEIF3_Pos)                  /*!< 0x00000800 */
+#define DMA_IFCR_CTEIF3        DMA_IFCR_CTEIF3_Msk                             /*!< Channel 3 Transfer Error clear */
+#define DMA_IFCR_CGIF4_Pos     (12U)
+#define DMA_IFCR_CGIF4_Msk     (0x1UL << DMA_IFCR_CGIF4_Pos)                   /*!< 0x00001000 */
+#define DMA_IFCR_CGIF4         DMA_IFCR_CGIF4_Msk                              /*!< Channel 4 Global interrupt clear */
+#define DMA_IFCR_CTCIF4_Pos    (13U)
+#define DMA_IFCR_CTCIF4_Msk    (0x1UL << DMA_IFCR_CTCIF4_Pos)                  /*!< 0x00002000 */
+#define DMA_IFCR_CTCIF4        DMA_IFCR_CTCIF4_Msk                             /*!< Channel 4 Transfer Complete clear */
+#define DMA_IFCR_CHTIF4_Pos    (14U)
+#define DMA_IFCR_CHTIF4_Msk    (0x1UL << DMA_IFCR_CHTIF4_Pos)                  /*!< 0x00004000 */
+#define DMA_IFCR_CHTIF4        DMA_IFCR_CHTIF4_Msk                             /*!< Channel 4 Half Transfer clear */
+#define DMA_IFCR_CTEIF4_Pos    (15U)
+#define DMA_IFCR_CTEIF4_Msk    (0x1UL << DMA_IFCR_CTEIF4_Pos)                  /*!< 0x00008000 */
+#define DMA_IFCR_CTEIF4        DMA_IFCR_CTEIF4_Msk                             /*!< Channel 4 Transfer Error clear */
+#define DMA_IFCR_CGIF5_Pos     (16U)
+#define DMA_IFCR_CGIF5_Msk     (0x1UL << DMA_IFCR_CGIF5_Pos)                   /*!< 0x00010000 */
+#define DMA_IFCR_CGIF5         DMA_IFCR_CGIF5_Msk                              /*!< Channel 5 Global interrupt clear */
+#define DMA_IFCR_CTCIF5_Pos    (17U)
+#define DMA_IFCR_CTCIF5_Msk    (0x1UL << DMA_IFCR_CTCIF5_Pos)                  /*!< 0x00020000 */
+#define DMA_IFCR_CTCIF5        DMA_IFCR_CTCIF5_Msk                             /*!< Channel 5 Transfer Complete clear */
+#define DMA_IFCR_CHTIF5_Pos    (18U)
+#define DMA_IFCR_CHTIF5_Msk    (0x1UL << DMA_IFCR_CHTIF5_Pos)                  /*!< 0x00040000 */
+#define DMA_IFCR_CHTIF5        DMA_IFCR_CHTIF5_Msk                             /*!< Channel 5 Half Transfer clear */
+#define DMA_IFCR_CTEIF5_Pos    (19U)
+#define DMA_IFCR_CTEIF5_Msk    (0x1UL << DMA_IFCR_CTEIF5_Pos)                  /*!< 0x00080000 */
+#define DMA_IFCR_CTEIF5        DMA_IFCR_CTEIF5_Msk                             /*!< Channel 5 Transfer Error clear */
+#define DMA_IFCR_CGIF6_Pos     (20U)
+#define DMA_IFCR_CGIF6_Msk     (0x1UL << DMA_IFCR_CGIF6_Pos)                   /*!< 0x00100000 */
+#define DMA_IFCR_CGIF6         DMA_IFCR_CGIF6_Msk                              /*!< Channel 6 Global interrupt clear */
+#define DMA_IFCR_CTCIF6_Pos    (21U)
+#define DMA_IFCR_CTCIF6_Msk    (0x1UL << DMA_IFCR_CTCIF6_Pos)                  /*!< 0x00200000 */
+#define DMA_IFCR_CTCIF6        DMA_IFCR_CTCIF6_Msk                             /*!< Channel 6 Transfer Complete clear */
+#define DMA_IFCR_CHTIF6_Pos    (22U)
+#define DMA_IFCR_CHTIF6_Msk    (0x1UL << DMA_IFCR_CHTIF6_Pos)                  /*!< 0x00400000 */
+#define DMA_IFCR_CHTIF6        DMA_IFCR_CHTIF6_Msk                             /*!< Channel 6 Half Transfer clear */
+#define DMA_IFCR_CTEIF6_Pos    (23U)
+#define DMA_IFCR_CTEIF6_Msk    (0x1UL << DMA_IFCR_CTEIF6_Pos)                  /*!< 0x00800000 */
+#define DMA_IFCR_CTEIF6        DMA_IFCR_CTEIF6_Msk                             /*!< Channel 6 Transfer Error clear */
 
-/********************  Bits definition for DMA_SxFCR register  ****************/ 
-#define DMA_SxFCR_FEIE_Pos       (7U)                                          
-#define DMA_SxFCR_FEIE_Msk       (0x1U << DMA_SxFCR_FEIE_Pos)                  /*!< 0x00000080 */
-#define DMA_SxFCR_FEIE           DMA_SxFCR_FEIE_Msk                            
-#define DMA_SxFCR_FS_Pos         (3U)                                          
-#define DMA_SxFCR_FS_Msk         (0x7U << DMA_SxFCR_FS_Pos)                    /*!< 0x00000038 */
-#define DMA_SxFCR_FS             DMA_SxFCR_FS_Msk                              
-#define DMA_SxFCR_FS_0           (0x1U << DMA_SxFCR_FS_Pos)                    /*!< 0x00000008 */
-#define DMA_SxFCR_FS_1           (0x2U << DMA_SxFCR_FS_Pos)                    /*!< 0x00000010 */
-#define DMA_SxFCR_FS_2           (0x4U << DMA_SxFCR_FS_Pos)                    /*!< 0x00000020 */
-#define DMA_SxFCR_DMDIS_Pos      (2U)                                          
-#define DMA_SxFCR_DMDIS_Msk      (0x1U << DMA_SxFCR_DMDIS_Pos)                 /*!< 0x00000004 */
-#define DMA_SxFCR_DMDIS          DMA_SxFCR_DMDIS_Msk                           
-#define DMA_SxFCR_FTH_Pos        (0U)                                          
-#define DMA_SxFCR_FTH_Msk        (0x3U << DMA_SxFCR_FTH_Pos)                   /*!< 0x00000003 */
-#define DMA_SxFCR_FTH            DMA_SxFCR_FTH_Msk                             
-#define DMA_SxFCR_FTH_0          (0x1U << DMA_SxFCR_FTH_Pos)                   /*!< 0x00000001 */
-#define DMA_SxFCR_FTH_1          (0x2U << DMA_SxFCR_FTH_Pos)                   /*!< 0x00000002 */
+/*******************  Bit definition for DMA_CCR register  ********************/
+#define DMA_CCR_EN_Pos         (0U)
+#define DMA_CCR_EN_Msk         (0x1UL << DMA_CCR_EN_Pos)                       /*!< 0x00000001 */
+#define DMA_CCR_EN             DMA_CCR_EN_Msk                                  /*!< Channel enable                      */
+#define DMA_CCR_TCIE_Pos       (1U)
+#define DMA_CCR_TCIE_Msk       (0x1UL << DMA_CCR_TCIE_Pos)                     /*!< 0x00000002 */
+#define DMA_CCR_TCIE           DMA_CCR_TCIE_Msk                                /*!< Transfer complete interrupt enable  */
+#define DMA_CCR_HTIE_Pos       (2U)
+#define DMA_CCR_HTIE_Msk       (0x1UL << DMA_CCR_HTIE_Pos)                     /*!< 0x00000004 */
+#define DMA_CCR_HTIE           DMA_CCR_HTIE_Msk                                /*!< Half Transfer interrupt enable      */
+#define DMA_CCR_TEIE_Pos       (3U)
+#define DMA_CCR_TEIE_Msk       (0x1UL << DMA_CCR_TEIE_Pos)                     /*!< 0x00000008 */
+#define DMA_CCR_TEIE           DMA_CCR_TEIE_Msk                                /*!< Transfer error interrupt enable     */
+#define DMA_CCR_DIR_Pos        (4U)
+#define DMA_CCR_DIR_Msk        (0x1UL << DMA_CCR_DIR_Pos)                      /*!< 0x00000010 */
+#define DMA_CCR_DIR            DMA_CCR_DIR_Msk                                 /*!< Data transfer direction             */
+#define DMA_CCR_CIRC_Pos       (5U)
+#define DMA_CCR_CIRC_Msk       (0x1UL << DMA_CCR_CIRC_Pos)                     /*!< 0x00000020 */
+#define DMA_CCR_CIRC           DMA_CCR_CIRC_Msk                                /*!< Circular mode                       */
+#define DMA_CCR_PINC_Pos       (6U)
+#define DMA_CCR_PINC_Msk       (0x1UL << DMA_CCR_PINC_Pos)                     /*!< 0x00000040 */
+#define DMA_CCR_PINC           DMA_CCR_PINC_Msk                                /*!< Peripheral increment mode           */
+#define DMA_CCR_MINC_Pos       (7U)
+#define DMA_CCR_MINC_Msk       (0x1UL << DMA_CCR_MINC_Pos)                     /*!< 0x00000080 */
+#define DMA_CCR_MINC           DMA_CCR_MINC_Msk                                /*!< Memory increment mode               */
 
-/********************  Bits definition for DMA_LISR register  *****************/ 
-#define DMA_LISR_TCIF3_Pos       (27U)                                         
-#define DMA_LISR_TCIF3_Msk       (0x1U << DMA_LISR_TCIF3_Pos)                  /*!< 0x08000000 */
-#define DMA_LISR_TCIF3           DMA_LISR_TCIF3_Msk                            
-#define DMA_LISR_HTIF3_Pos       (26U)                                         
-#define DMA_LISR_HTIF3_Msk       (0x1U << DMA_LISR_HTIF3_Pos)                  /*!< 0x04000000 */
-#define DMA_LISR_HTIF3           DMA_LISR_HTIF3_Msk                            
-#define DMA_LISR_TEIF3_Pos       (25U)                                         
-#define DMA_LISR_TEIF3_Msk       (0x1U << DMA_LISR_TEIF3_Pos)                  /*!< 0x02000000 */
-#define DMA_LISR_TEIF3           DMA_LISR_TEIF3_Msk                            
-#define DMA_LISR_DMEIF3_Pos      (24U)                                         
-#define DMA_LISR_DMEIF3_Msk      (0x1U << DMA_LISR_DMEIF3_Pos)                 /*!< 0x01000000 */
-#define DMA_LISR_DMEIF3          DMA_LISR_DMEIF3_Msk                           
-#define DMA_LISR_FEIF3_Pos       (22U)                                         
-#define DMA_LISR_FEIF3_Msk       (0x1U << DMA_LISR_FEIF3_Pos)                  /*!< 0x00400000 */
-#define DMA_LISR_FEIF3           DMA_LISR_FEIF3_Msk                            
-#define DMA_LISR_TCIF2_Pos       (21U)                                         
-#define DMA_LISR_TCIF2_Msk       (0x1U << DMA_LISR_TCIF2_Pos)                  /*!< 0x00200000 */
-#define DMA_LISR_TCIF2           DMA_LISR_TCIF2_Msk                            
-#define DMA_LISR_HTIF2_Pos       (20U)                                         
-#define DMA_LISR_HTIF2_Msk       (0x1U << DMA_LISR_HTIF2_Pos)                  /*!< 0x00100000 */
-#define DMA_LISR_HTIF2           DMA_LISR_HTIF2_Msk                            
-#define DMA_LISR_TEIF2_Pos       (19U)                                         
-#define DMA_LISR_TEIF2_Msk       (0x1U << DMA_LISR_TEIF2_Pos)                  /*!< 0x00080000 */
-#define DMA_LISR_TEIF2           DMA_LISR_TEIF2_Msk                            
-#define DMA_LISR_DMEIF2_Pos      (18U)                                         
-#define DMA_LISR_DMEIF2_Msk      (0x1U << DMA_LISR_DMEIF2_Pos)                 /*!< 0x00040000 */
-#define DMA_LISR_DMEIF2          DMA_LISR_DMEIF2_Msk                           
-#define DMA_LISR_FEIF2_Pos       (16U)                                         
-#define DMA_LISR_FEIF2_Msk       (0x1U << DMA_LISR_FEIF2_Pos)                  /*!< 0x00010000 */
-#define DMA_LISR_FEIF2           DMA_LISR_FEIF2_Msk                            
-#define DMA_LISR_TCIF1_Pos       (11U)                                         
-#define DMA_LISR_TCIF1_Msk       (0x1U << DMA_LISR_TCIF1_Pos)                  /*!< 0x00000800 */
-#define DMA_LISR_TCIF1           DMA_LISR_TCIF1_Msk                            
-#define DMA_LISR_HTIF1_Pos       (10U)                                         
-#define DMA_LISR_HTIF1_Msk       (0x1U << DMA_LISR_HTIF1_Pos)                  /*!< 0x00000400 */
-#define DMA_LISR_HTIF1           DMA_LISR_HTIF1_Msk                            
-#define DMA_LISR_TEIF1_Pos       (9U)                                          
-#define DMA_LISR_TEIF1_Msk       (0x1U << DMA_LISR_TEIF1_Pos)                  /*!< 0x00000200 */
-#define DMA_LISR_TEIF1           DMA_LISR_TEIF1_Msk                            
-#define DMA_LISR_DMEIF1_Pos      (8U)                                          
-#define DMA_LISR_DMEIF1_Msk      (0x1U << DMA_LISR_DMEIF1_Pos)                 /*!< 0x00000100 */
-#define DMA_LISR_DMEIF1          DMA_LISR_DMEIF1_Msk                           
-#define DMA_LISR_FEIF1_Pos       (6U)                                          
-#define DMA_LISR_FEIF1_Msk       (0x1U << DMA_LISR_FEIF1_Pos)                  /*!< 0x00000040 */
-#define DMA_LISR_FEIF1           DMA_LISR_FEIF1_Msk                            
-#define DMA_LISR_TCIF0_Pos       (5U)                                          
-#define DMA_LISR_TCIF0_Msk       (0x1U << DMA_LISR_TCIF0_Pos)                  /*!< 0x00000020 */
-#define DMA_LISR_TCIF0           DMA_LISR_TCIF0_Msk                            
-#define DMA_LISR_HTIF0_Pos       (4U)                                          
-#define DMA_LISR_HTIF0_Msk       (0x1U << DMA_LISR_HTIF0_Pos)                  /*!< 0x00000010 */
-#define DMA_LISR_HTIF0           DMA_LISR_HTIF0_Msk                            
-#define DMA_LISR_TEIF0_Pos       (3U)                                          
-#define DMA_LISR_TEIF0_Msk       (0x1U << DMA_LISR_TEIF0_Pos)                  /*!< 0x00000008 */
-#define DMA_LISR_TEIF0           DMA_LISR_TEIF0_Msk                            
-#define DMA_LISR_DMEIF0_Pos      (2U)                                          
-#define DMA_LISR_DMEIF0_Msk      (0x1U << DMA_LISR_DMEIF0_Pos)                 /*!< 0x00000004 */
-#define DMA_LISR_DMEIF0          DMA_LISR_DMEIF0_Msk                           
-#define DMA_LISR_FEIF0_Pos       (0U)                                          
-#define DMA_LISR_FEIF0_Msk       (0x1U << DMA_LISR_FEIF0_Pos)                  /*!< 0x00000001 */
-#define DMA_LISR_FEIF0           DMA_LISR_FEIF0_Msk                            
+#define DMA_CCR_PSIZE_Pos      (8U)
+#define DMA_CCR_PSIZE_Msk      (0x3UL << DMA_CCR_PSIZE_Pos)                    /*!< 0x00000300 */
+#define DMA_CCR_PSIZE          DMA_CCR_PSIZE_Msk                               /*!< PSIZE[1:0] bits (Peripheral size)   */
+#define DMA_CCR_PSIZE_0        (0x1UL << DMA_CCR_PSIZE_Pos)                    /*!< 0x00000100 */
+#define DMA_CCR_PSIZE_1        (0x2UL << DMA_CCR_PSIZE_Pos)                    /*!< 0x00000200 */
 
-/********************  Bits definition for DMA_HISR register  *****************/ 
-#define DMA_HISR_TCIF7_Pos       (27U)                                         
-#define DMA_HISR_TCIF7_Msk       (0x1U << DMA_HISR_TCIF7_Pos)                  /*!< 0x08000000 */
-#define DMA_HISR_TCIF7           DMA_HISR_TCIF7_Msk                            
-#define DMA_HISR_HTIF7_Pos       (26U)                                         
-#define DMA_HISR_HTIF7_Msk       (0x1U << DMA_HISR_HTIF7_Pos)                  /*!< 0x04000000 */
-#define DMA_HISR_HTIF7           DMA_HISR_HTIF7_Msk                            
-#define DMA_HISR_TEIF7_Pos       (25U)                                         
-#define DMA_HISR_TEIF7_Msk       (0x1U << DMA_HISR_TEIF7_Pos)                  /*!< 0x02000000 */
-#define DMA_HISR_TEIF7           DMA_HISR_TEIF7_Msk                            
-#define DMA_HISR_DMEIF7_Pos      (24U)                                         
-#define DMA_HISR_DMEIF7_Msk      (0x1U << DMA_HISR_DMEIF7_Pos)                 /*!< 0x01000000 */
-#define DMA_HISR_DMEIF7          DMA_HISR_DMEIF7_Msk                           
-#define DMA_HISR_FEIF7_Pos       (22U)                                         
-#define DMA_HISR_FEIF7_Msk       (0x1U << DMA_HISR_FEIF7_Pos)                  /*!< 0x00400000 */
-#define DMA_HISR_FEIF7           DMA_HISR_FEIF7_Msk                            
-#define DMA_HISR_TCIF6_Pos       (21U)                                         
-#define DMA_HISR_TCIF6_Msk       (0x1U << DMA_HISR_TCIF6_Pos)                  /*!< 0x00200000 */
-#define DMA_HISR_TCIF6           DMA_HISR_TCIF6_Msk                            
-#define DMA_HISR_HTIF6_Pos       (20U)                                         
-#define DMA_HISR_HTIF6_Msk       (0x1U << DMA_HISR_HTIF6_Pos)                  /*!< 0x00100000 */
-#define DMA_HISR_HTIF6           DMA_HISR_HTIF6_Msk                            
-#define DMA_HISR_TEIF6_Pos       (19U)                                         
-#define DMA_HISR_TEIF6_Msk       (0x1U << DMA_HISR_TEIF6_Pos)                  /*!< 0x00080000 */
-#define DMA_HISR_TEIF6           DMA_HISR_TEIF6_Msk                            
-#define DMA_HISR_DMEIF6_Pos      (18U)                                         
-#define DMA_HISR_DMEIF6_Msk      (0x1U << DMA_HISR_DMEIF6_Pos)                 /*!< 0x00040000 */
-#define DMA_HISR_DMEIF6          DMA_HISR_DMEIF6_Msk                           
-#define DMA_HISR_FEIF6_Pos       (16U)                                         
-#define DMA_HISR_FEIF6_Msk       (0x1U << DMA_HISR_FEIF6_Pos)                  /*!< 0x00010000 */
-#define DMA_HISR_FEIF6           DMA_HISR_FEIF6_Msk                            
-#define DMA_HISR_TCIF5_Pos       (11U)                                         
-#define DMA_HISR_TCIF5_Msk       (0x1U << DMA_HISR_TCIF5_Pos)                  /*!< 0x00000800 */
-#define DMA_HISR_TCIF5           DMA_HISR_TCIF5_Msk                            
-#define DMA_HISR_HTIF5_Pos       (10U)                                         
-#define DMA_HISR_HTIF5_Msk       (0x1U << DMA_HISR_HTIF5_Pos)                  /*!< 0x00000400 */
-#define DMA_HISR_HTIF5           DMA_HISR_HTIF5_Msk                            
-#define DMA_HISR_TEIF5_Pos       (9U)                                          
-#define DMA_HISR_TEIF5_Msk       (0x1U << DMA_HISR_TEIF5_Pos)                  /*!< 0x00000200 */
-#define DMA_HISR_TEIF5           DMA_HISR_TEIF5_Msk                            
-#define DMA_HISR_DMEIF5_Pos      (8U)                                          
-#define DMA_HISR_DMEIF5_Msk      (0x1U << DMA_HISR_DMEIF5_Pos)                 /*!< 0x00000100 */
-#define DMA_HISR_DMEIF5          DMA_HISR_DMEIF5_Msk                           
-#define DMA_HISR_FEIF5_Pos       (6U)                                          
-#define DMA_HISR_FEIF5_Msk       (0x1U << DMA_HISR_FEIF5_Pos)                  /*!< 0x00000040 */
-#define DMA_HISR_FEIF5           DMA_HISR_FEIF5_Msk                            
-#define DMA_HISR_TCIF4_Pos       (5U)                                          
-#define DMA_HISR_TCIF4_Msk       (0x1U << DMA_HISR_TCIF4_Pos)                  /*!< 0x00000020 */
-#define DMA_HISR_TCIF4           DMA_HISR_TCIF4_Msk                            
-#define DMA_HISR_HTIF4_Pos       (4U)                                          
-#define DMA_HISR_HTIF4_Msk       (0x1U << DMA_HISR_HTIF4_Pos)                  /*!< 0x00000010 */
-#define DMA_HISR_HTIF4           DMA_HISR_HTIF4_Msk                            
-#define DMA_HISR_TEIF4_Pos       (3U)                                          
-#define DMA_HISR_TEIF4_Msk       (0x1U << DMA_HISR_TEIF4_Pos)                  /*!< 0x00000008 */
-#define DMA_HISR_TEIF4           DMA_HISR_TEIF4_Msk                            
-#define DMA_HISR_DMEIF4_Pos      (2U)                                          
-#define DMA_HISR_DMEIF4_Msk      (0x1U << DMA_HISR_DMEIF4_Pos)                 /*!< 0x00000004 */
-#define DMA_HISR_DMEIF4          DMA_HISR_DMEIF4_Msk                           
-#define DMA_HISR_FEIF4_Pos       (0U)                                          
-#define DMA_HISR_FEIF4_Msk       (0x1U << DMA_HISR_FEIF4_Pos)                  /*!< 0x00000001 */
-#define DMA_HISR_FEIF4           DMA_HISR_FEIF4_Msk                            
+#define DMA_CCR_MSIZE_Pos      (10U)
+#define DMA_CCR_MSIZE_Msk      (0x3UL << DMA_CCR_MSIZE_Pos)                    /*!< 0x00000C00 */
+#define DMA_CCR_MSIZE          DMA_CCR_MSIZE_Msk                               /*!< MSIZE[1:0] bits (Memory size)       */
+#define DMA_CCR_MSIZE_0        (0x1UL << DMA_CCR_MSIZE_Pos)                    /*!< 0x00000400 */
+#define DMA_CCR_MSIZE_1        (0x2UL << DMA_CCR_MSIZE_Pos)                    /*!< 0x00000800 */
 
-/********************  Bits definition for DMA_LIFCR register  ****************/ 
-#define DMA_LIFCR_CTCIF3_Pos     (27U)                                         
-#define DMA_LIFCR_CTCIF3_Msk     (0x1U << DMA_LIFCR_CTCIF3_Pos)                /*!< 0x08000000 */
-#define DMA_LIFCR_CTCIF3         DMA_LIFCR_CTCIF3_Msk                          
-#define DMA_LIFCR_CHTIF3_Pos     (26U)                                         
-#define DMA_LIFCR_CHTIF3_Msk     (0x1U << DMA_LIFCR_CHTIF3_Pos)                /*!< 0x04000000 */
-#define DMA_LIFCR_CHTIF3         DMA_LIFCR_CHTIF3_Msk                          
-#define DMA_LIFCR_CTEIF3_Pos     (25U)                                         
-#define DMA_LIFCR_CTEIF3_Msk     (0x1U << DMA_LIFCR_CTEIF3_Pos)                /*!< 0x02000000 */
-#define DMA_LIFCR_CTEIF3         DMA_LIFCR_CTEIF3_Msk                          
-#define DMA_LIFCR_CDMEIF3_Pos    (24U)                                         
-#define DMA_LIFCR_CDMEIF3_Msk    (0x1U << DMA_LIFCR_CDMEIF3_Pos)               /*!< 0x01000000 */
-#define DMA_LIFCR_CDMEIF3        DMA_LIFCR_CDMEIF3_Msk                         
-#define DMA_LIFCR_CFEIF3_Pos     (22U)                                         
-#define DMA_LIFCR_CFEIF3_Msk     (0x1U << DMA_LIFCR_CFEIF3_Pos)                /*!< 0x00400000 */
-#define DMA_LIFCR_CFEIF3         DMA_LIFCR_CFEIF3_Msk                          
-#define DMA_LIFCR_CTCIF2_Pos     (21U)                                         
-#define DMA_LIFCR_CTCIF2_Msk     (0x1U << DMA_LIFCR_CTCIF2_Pos)                /*!< 0x00200000 */
-#define DMA_LIFCR_CTCIF2         DMA_LIFCR_CTCIF2_Msk                          
-#define DMA_LIFCR_CHTIF2_Pos     (20U)                                         
-#define DMA_LIFCR_CHTIF2_Msk     (0x1U << DMA_LIFCR_CHTIF2_Pos)                /*!< 0x00100000 */
-#define DMA_LIFCR_CHTIF2         DMA_LIFCR_CHTIF2_Msk                          
-#define DMA_LIFCR_CTEIF2_Pos     (19U)                                         
-#define DMA_LIFCR_CTEIF2_Msk     (0x1U << DMA_LIFCR_CTEIF2_Pos)                /*!< 0x00080000 */
-#define DMA_LIFCR_CTEIF2         DMA_LIFCR_CTEIF2_Msk                          
-#define DMA_LIFCR_CDMEIF2_Pos    (18U)                                         
-#define DMA_LIFCR_CDMEIF2_Msk    (0x1U << DMA_LIFCR_CDMEIF2_Pos)               /*!< 0x00040000 */
-#define DMA_LIFCR_CDMEIF2        DMA_LIFCR_CDMEIF2_Msk                         
-#define DMA_LIFCR_CFEIF2_Pos     (16U)                                         
-#define DMA_LIFCR_CFEIF2_Msk     (0x1U << DMA_LIFCR_CFEIF2_Pos)                /*!< 0x00010000 */
-#define DMA_LIFCR_CFEIF2         DMA_LIFCR_CFEIF2_Msk                          
-#define DMA_LIFCR_CTCIF1_Pos     (11U)                                         
-#define DMA_LIFCR_CTCIF1_Msk     (0x1U << DMA_LIFCR_CTCIF1_Pos)                /*!< 0x00000800 */
-#define DMA_LIFCR_CTCIF1         DMA_LIFCR_CTCIF1_Msk                          
-#define DMA_LIFCR_CHTIF1_Pos     (10U)                                         
-#define DMA_LIFCR_CHTIF1_Msk     (0x1U << DMA_LIFCR_CHTIF1_Pos)                /*!< 0x00000400 */
-#define DMA_LIFCR_CHTIF1         DMA_LIFCR_CHTIF1_Msk                          
-#define DMA_LIFCR_CTEIF1_Pos     (9U)                                          
-#define DMA_LIFCR_CTEIF1_Msk     (0x1U << DMA_LIFCR_CTEIF1_Pos)                /*!< 0x00000200 */
-#define DMA_LIFCR_CTEIF1         DMA_LIFCR_CTEIF1_Msk                          
-#define DMA_LIFCR_CDMEIF1_Pos    (8U)                                          
-#define DMA_LIFCR_CDMEIF1_Msk    (0x1U << DMA_LIFCR_CDMEIF1_Pos)               /*!< 0x00000100 */
-#define DMA_LIFCR_CDMEIF1        DMA_LIFCR_CDMEIF1_Msk                         
-#define DMA_LIFCR_CFEIF1_Pos     (6U)                                          
-#define DMA_LIFCR_CFEIF1_Msk     (0x1U << DMA_LIFCR_CFEIF1_Pos)                /*!< 0x00000040 */
-#define DMA_LIFCR_CFEIF1         DMA_LIFCR_CFEIF1_Msk                          
-#define DMA_LIFCR_CTCIF0_Pos     (5U)                                          
-#define DMA_LIFCR_CTCIF0_Msk     (0x1U << DMA_LIFCR_CTCIF0_Pos)                /*!< 0x00000020 */
-#define DMA_LIFCR_CTCIF0         DMA_LIFCR_CTCIF0_Msk                          
-#define DMA_LIFCR_CHTIF0_Pos     (4U)                                          
-#define DMA_LIFCR_CHTIF0_Msk     (0x1U << DMA_LIFCR_CHTIF0_Pos)                /*!< 0x00000010 */
-#define DMA_LIFCR_CHTIF0         DMA_LIFCR_CHTIF0_Msk                          
-#define DMA_LIFCR_CTEIF0_Pos     (3U)                                          
-#define DMA_LIFCR_CTEIF0_Msk     (0x1U << DMA_LIFCR_CTEIF0_Pos)                /*!< 0x00000008 */
-#define DMA_LIFCR_CTEIF0         DMA_LIFCR_CTEIF0_Msk                          
-#define DMA_LIFCR_CDMEIF0_Pos    (2U)                                          
-#define DMA_LIFCR_CDMEIF0_Msk    (0x1U << DMA_LIFCR_CDMEIF0_Pos)               /*!< 0x00000004 */
-#define DMA_LIFCR_CDMEIF0        DMA_LIFCR_CDMEIF0_Msk                         
-#define DMA_LIFCR_CFEIF0_Pos     (0U)                                          
-#define DMA_LIFCR_CFEIF0_Msk     (0x1U << DMA_LIFCR_CFEIF0_Pos)                /*!< 0x00000001 */
-#define DMA_LIFCR_CFEIF0         DMA_LIFCR_CFEIF0_Msk                          
+#define DMA_CCR_PL_Pos         (12U)
+#define DMA_CCR_PL_Msk         (0x3UL << DMA_CCR_PL_Pos)                       /*!< 0x00003000 */
+#define DMA_CCR_PL             DMA_CCR_PL_Msk                                  /*!< PL[1:0] bits(Channel Priority level)*/
+#define DMA_CCR_PL_0           (0x1UL << DMA_CCR_PL_Pos)                       /*!< 0x00001000 */
+#define DMA_CCR_PL_1           (0x2UL << DMA_CCR_PL_Pos)                       /*!< 0x00002000 */
 
-/********************  Bits definition for DMA_HIFCR  register  ****************/ 
-#define DMA_HIFCR_CTCIF7_Pos     (27U)                                         
-#define DMA_HIFCR_CTCIF7_Msk     (0x1U << DMA_HIFCR_CTCIF7_Pos)                /*!< 0x08000000 */
-#define DMA_HIFCR_CTCIF7         DMA_HIFCR_CTCIF7_Msk                          
-#define DMA_HIFCR_CHTIF7_Pos     (26U)                                         
-#define DMA_HIFCR_CHTIF7_Msk     (0x1U << DMA_HIFCR_CHTIF7_Pos)                /*!< 0x04000000 */
-#define DMA_HIFCR_CHTIF7         DMA_HIFCR_CHTIF7_Msk                          
-#define DMA_HIFCR_CTEIF7_Pos     (25U)                                         
-#define DMA_HIFCR_CTEIF7_Msk     (0x1U << DMA_HIFCR_CTEIF7_Pos)                /*!< 0x02000000 */
-#define DMA_HIFCR_CTEIF7         DMA_HIFCR_CTEIF7_Msk                          
-#define DMA_HIFCR_CDMEIF7_Pos    (24U)                                         
-#define DMA_HIFCR_CDMEIF7_Msk    (0x1U << DMA_HIFCR_CDMEIF7_Pos)               /*!< 0x01000000 */
-#define DMA_HIFCR_CDMEIF7        DMA_HIFCR_CDMEIF7_Msk                         
-#define DMA_HIFCR_CFEIF7_Pos     (22U)                                         
-#define DMA_HIFCR_CFEIF7_Msk     (0x1U << DMA_HIFCR_CFEIF7_Pos)                /*!< 0x00400000 */
-#define DMA_HIFCR_CFEIF7         DMA_HIFCR_CFEIF7_Msk                          
-#define DMA_HIFCR_CTCIF6_Pos     (21U)                                         
-#define DMA_HIFCR_CTCIF6_Msk     (0x1U << DMA_HIFCR_CTCIF6_Pos)                /*!< 0x00200000 */
-#define DMA_HIFCR_CTCIF6         DMA_HIFCR_CTCIF6_Msk                          
-#define DMA_HIFCR_CHTIF6_Pos     (20U)                                         
-#define DMA_HIFCR_CHTIF6_Msk     (0x1U << DMA_HIFCR_CHTIF6_Pos)                /*!< 0x00100000 */
-#define DMA_HIFCR_CHTIF6         DMA_HIFCR_CHTIF6_Msk                          
-#define DMA_HIFCR_CTEIF6_Pos     (19U)                                         
-#define DMA_HIFCR_CTEIF6_Msk     (0x1U << DMA_HIFCR_CTEIF6_Pos)                /*!< 0x00080000 */
-#define DMA_HIFCR_CTEIF6         DMA_HIFCR_CTEIF6_Msk                          
-#define DMA_HIFCR_CDMEIF6_Pos    (18U)                                         
-#define DMA_HIFCR_CDMEIF6_Msk    (0x1U << DMA_HIFCR_CDMEIF6_Pos)               /*!< 0x00040000 */
-#define DMA_HIFCR_CDMEIF6        DMA_HIFCR_CDMEIF6_Msk                         
-#define DMA_HIFCR_CFEIF6_Pos     (16U)                                         
-#define DMA_HIFCR_CFEIF6_Msk     (0x1U << DMA_HIFCR_CFEIF6_Pos)                /*!< 0x00010000 */
-#define DMA_HIFCR_CFEIF6         DMA_HIFCR_CFEIF6_Msk                          
-#define DMA_HIFCR_CTCIF5_Pos     (11U)                                         
-#define DMA_HIFCR_CTCIF5_Msk     (0x1U << DMA_HIFCR_CTCIF5_Pos)                /*!< 0x00000800 */
-#define DMA_HIFCR_CTCIF5         DMA_HIFCR_CTCIF5_Msk                          
-#define DMA_HIFCR_CHTIF5_Pos     (10U)                                         
-#define DMA_HIFCR_CHTIF5_Msk     (0x1U << DMA_HIFCR_CHTIF5_Pos)                /*!< 0x00000400 */
-#define DMA_HIFCR_CHTIF5         DMA_HIFCR_CHTIF5_Msk                          
-#define DMA_HIFCR_CTEIF5_Pos     (9U)                                          
-#define DMA_HIFCR_CTEIF5_Msk     (0x1U << DMA_HIFCR_CTEIF5_Pos)                /*!< 0x00000200 */
-#define DMA_HIFCR_CTEIF5         DMA_HIFCR_CTEIF5_Msk                          
-#define DMA_HIFCR_CDMEIF5_Pos    (8U)                                          
-#define DMA_HIFCR_CDMEIF5_Msk    (0x1U << DMA_HIFCR_CDMEIF5_Pos)               /*!< 0x00000100 */
-#define DMA_HIFCR_CDMEIF5        DMA_HIFCR_CDMEIF5_Msk                         
-#define DMA_HIFCR_CFEIF5_Pos     (6U)                                          
-#define DMA_HIFCR_CFEIF5_Msk     (0x1U << DMA_HIFCR_CFEIF5_Pos)                /*!< 0x00000040 */
-#define DMA_HIFCR_CFEIF5         DMA_HIFCR_CFEIF5_Msk                          
-#define DMA_HIFCR_CTCIF4_Pos     (5U)                                          
-#define DMA_HIFCR_CTCIF4_Msk     (0x1U << DMA_HIFCR_CTCIF4_Pos)                /*!< 0x00000020 */
-#define DMA_HIFCR_CTCIF4         DMA_HIFCR_CTCIF4_Msk                          
-#define DMA_HIFCR_CHTIF4_Pos     (4U)                                          
-#define DMA_HIFCR_CHTIF4_Msk     (0x1U << DMA_HIFCR_CHTIF4_Pos)                /*!< 0x00000010 */
-#define DMA_HIFCR_CHTIF4         DMA_HIFCR_CHTIF4_Msk                          
-#define DMA_HIFCR_CTEIF4_Pos     (3U)                                          
-#define DMA_HIFCR_CTEIF4_Msk     (0x1U << DMA_HIFCR_CTEIF4_Pos)                /*!< 0x00000008 */
-#define DMA_HIFCR_CTEIF4         DMA_HIFCR_CTEIF4_Msk                          
-#define DMA_HIFCR_CDMEIF4_Pos    (2U)                                          
-#define DMA_HIFCR_CDMEIF4_Msk    (0x1U << DMA_HIFCR_CDMEIF4_Pos)               /*!< 0x00000004 */
-#define DMA_HIFCR_CDMEIF4        DMA_HIFCR_CDMEIF4_Msk                         
-#define DMA_HIFCR_CFEIF4_Pos     (0U)                                          
-#define DMA_HIFCR_CFEIF4_Msk     (0x1U << DMA_HIFCR_CFEIF4_Pos)                /*!< 0x00000001 */
-#define DMA_HIFCR_CFEIF4         DMA_HIFCR_CFEIF4_Msk                          
+#define DMA_CCR_MEM2MEM_Pos    (14U)
+#define DMA_CCR_MEM2MEM_Msk    (0x1UL << DMA_CCR_MEM2MEM_Pos)                  /*!< 0x00004000 */
+#define DMA_CCR_MEM2MEM        DMA_CCR_MEM2MEM_Msk                             /*!< Memory to memory mode               */
 
-/******************  Bit definition for DMA_SxPAR register  ********************/
-#define DMA_SxPAR_PA_Pos         (0U)                                          
-#define DMA_SxPAR_PA_Msk         (0xFFFFFFFFU << DMA_SxPAR_PA_Pos)             /*!< 0xFFFFFFFF */
-#define DMA_SxPAR_PA             DMA_SxPAR_PA_Msk                              /*!< Peripheral Address */
+/******************  Bit definition for DMA_CNDTR register  *******************/
+#define DMA_CNDTR_NDT_Pos      (0U)
+#define DMA_CNDTR_NDT_Msk      (0xFFFFUL << DMA_CNDTR_NDT_Pos)                 /*!< 0x0000FFFF */
+#define DMA_CNDTR_NDT          DMA_CNDTR_NDT_Msk                               /*!< Number of data to Transfer          */
 
-/******************  Bit definition for DMA_SxM0AR register  ********************/
-#define DMA_SxM0AR_M0A_Pos       (0U)                                          
-#define DMA_SxM0AR_M0A_Msk       (0xFFFFFFFFU << DMA_SxM0AR_M0A_Pos)           /*!< 0xFFFFFFFF */
-#define DMA_SxM0AR_M0A           DMA_SxM0AR_M0A_Msk                            /*!< Memory Address */
+/******************  Bit definition for DMA_CPAR register  ********************/
+#define DMA_CPAR_PA_Pos        (0U)
+#define DMA_CPAR_PA_Msk        (0xFFFFFFFFUL << DMA_CPAR_PA_Pos)               /*!< 0xFFFFFFFF */
+#define DMA_CPAR_PA            DMA_CPAR_PA_Msk                                 /*!< Peripheral Address                  */
 
-/******************  Bit definition for DMA_SxM1AR register  ********************/
-#define DMA_SxM1AR_M1A_Pos       (0U)                                          
-#define DMA_SxM1AR_M1A_Msk       (0xFFFFFFFFU << DMA_SxM1AR_M1A_Pos)           /*!< 0xFFFFFFFF */
-#define DMA_SxM1AR_M1A           DMA_SxM1AR_M1A_Msk                            /*!< Memory Address */
-
+/******************  Bit definition for DMA_CMAR register  ********************/
+#define DMA_CMAR_MA_Pos        (0U)
+#define DMA_CMAR_MA_Msk        (0xFFFFFFFFUL << DMA_CMAR_MA_Pos)               /*!< 0xFFFFFFFF */
+#define DMA_CMAR_MA            DMA_CMAR_MA_Msk                                 /*!< Memory Address                      */
 
 /******************************************************************************/
 /*                                                                            */
@@ -10947,33 +10787,34 @@ typedef struct
 #define RCC_AHB1ENR_GPIOHEN_Pos            (7U)                                
 #define RCC_AHB1ENR_GPIOHEN_Msk            (0x1U << RCC_AHB1ENR_GPIOHEN_Pos)   /*!< 0x00000080 */
 #define RCC_AHB1ENR_GPIOHEN                RCC_AHB1ENR_GPIOHEN_Msk             
-#define RCC_AHB1ENR_GPIOIEN_Pos            (8U)                                
-#define RCC_AHB1ENR_GPIOIEN_Msk            (0x1U << RCC_AHB1ENR_GPIOIEN_Pos)   /*!< 0x00000100 */
-#define RCC_AHB1ENR_GPIOIEN                RCC_AHB1ENR_GPIOIEN_Msk             
-#define RCC_AHB1ENR_GPIOJEN_Pos            (9U)                                
-#define RCC_AHB1ENR_GPIOJEN_Msk            (0x1U << RCC_AHB1ENR_GPIOJEN_Pos)   /*!< 0x00000200 */
-#define RCC_AHB1ENR_GPIOJEN                RCC_AHB1ENR_GPIOJEN_Msk             
-#define RCC_AHB1ENR_GPIOKEN_Pos            (10U)                               
-#define RCC_AHB1ENR_GPIOKEN_Msk            (0x1U << RCC_AHB1ENR_GPIOKEN_Pos)   /*!< 0x00000400 */
-#define RCC_AHB1ENR_GPIOKEN                RCC_AHB1ENR_GPIOKEN_Msk             
+//#define RCC_AHB1ENR_GPIOIEN_Pos            (8U)                                
+//#define RCC_AHB1ENR_GPIOIEN_Msk            (0x1U << RCC_AHB1ENR_GPIOIEN_Pos)   /*!< 0x00000100 */
+//#define RCC_AHB1ENR_GPIOIEN                RCC_AHB1ENR_GPIOIEN_Msk             
+//#define RCC_AHB1ENR_GPIOJEN_Pos            (9U)                                
+//#define RCC_AHB1ENR_GPIOJEN_Msk            (0x1U << RCC_AHB1ENR_GPIOJEN_Pos)   /*!< 0x00000200 */
+//#define RCC_AHB1ENR_GPIOJEN                RCC_AHB1ENR_GPIOJEN_Msk             
+//#define RCC_AHB1ENR_GPIOKEN_Pos            (10U)                               
+//#define RCC_AHB1ENR_GPIOKEN_Msk            (0x1U << RCC_AHB1ENR_GPIOKEN_Pos)   /*!< 0x00000400 */
+//#define RCC_AHB1ENR_GPIOKEN                RCC_AHB1ENR_GPIOKEN_Msk             
 #define RCC_AHB1ENR_CRCEN_Pos              (12U)                               
 #define RCC_AHB1ENR_CRCEN_Msk              (0x1U << RCC_AHB1ENR_CRCEN_Pos)     /*!< 0x00001000 */
 #define RCC_AHB1ENR_CRCEN                  RCC_AHB1ENR_CRCEN_Msk               
-#define RCC_AHB1ENR_BKPSRAMEN_Pos          (18U)                               
-#define RCC_AHB1ENR_BKPSRAMEN_Msk          (0x1U << RCC_AHB1ENR_BKPSRAMEN_Pos) /*!< 0x00040000 */
-#define RCC_AHB1ENR_BKPSRAMEN              RCC_AHB1ENR_BKPSRAMEN_Msk           
-#define RCC_AHB1ENR_CCMDATARAMEN_Pos       (20U)                               
-#define RCC_AHB1ENR_CCMDATARAMEN_Msk       (0x1U << RCC_AHB1ENR_CCMDATARAMEN_Pos) /*!< 0x00100000 */
-#define RCC_AHB1ENR_CCMDATARAMEN           RCC_AHB1ENR_CCMDATARAMEN_Msk        
-#define RCC_AHB1ENR_DMA1EN_Pos             (21U)                               
+//#define RCC_AHB1ENR_BKPSRAMEN_Pos          (18U)                               
+//#define RCC_AHB1ENR_BKPSRAMEN_Msk          (0x1U << RCC_AHB1ENR_BKPSRAMEN_Pos) /*!< 0x00040000 */
+//#define RCC_AHB1ENR_BKPSRAMEN              RCC_AHB1ENR_BKPSRAMEN_Msk           
+//#define RCC_AHB1ENR_CCMDATARAMEN_Pos       (20U)                               
+//#define RCC_AHB1ENR_CCMDATARAMEN_Msk       (0x1U << RCC_AHB1ENR_CCMDATARAMEN_Pos) /*!< 0x00100000 */
+//#define RCC_AHB1ENR_CCMDATARAMEN           RCC_AHB1ENR_CCMDATARAMEN_Msk        
+/* EDMA 21 */
+#define RCC_AHB1ENR_DMA1EN_Pos             (22U)                               
 #define RCC_AHB1ENR_DMA1EN_Msk             (0x1U << RCC_AHB1ENR_DMA1EN_Pos)    /*!< 0x00200000 */
 #define RCC_AHB1ENR_DMA1EN                 RCC_AHB1ENR_DMA1EN_Msk              
-#define RCC_AHB1ENR_DMA2EN_Pos             (22U)                               
+#define RCC_AHB1ENR_DMA2EN_Pos             (24U)                               
 #define RCC_AHB1ENR_DMA2EN_Msk             (0x1U << RCC_AHB1ENR_DMA2EN_Pos)    /*!< 0x00400000 */
 #define RCC_AHB1ENR_DMA2EN                 RCC_AHB1ENR_DMA2EN_Msk              
-#define RCC_AHB1ENR_DMA2DEN_Pos            (23U)                               
-#define RCC_AHB1ENR_DMA2DEN_Msk            (0x1U << RCC_AHB1ENR_DMA2DEN_Pos)   /*!< 0x00800000 */
-#define RCC_AHB1ENR_DMA2DEN                RCC_AHB1ENR_DMA2DEN_Msk             
+//#define RCC_AHB1ENR_DMA2DEN_Pos            (23U)                               
+//#define RCC_AHB1ENR_DMA2DEN_Msk            (0x1U << RCC_AHB1ENR_DMA2DEN_Pos)   /*!< 0x00800000 */
+//#define RCC_AHB1ENR_DMA2DEN                RCC_AHB1ENR_DMA2DEN_Msk             
 #define RCC_AHB1ENR_ETHMACEN_Pos           (25U)                               
 #define RCC_AHB1ENR_ETHMACEN_Msk           (0x1U << RCC_AHB1ENR_ETHMACEN_Pos)  /*!< 0x02000000 */
 #define RCC_AHB1ENR_ETHMACEN               RCC_AHB1ENR_ETHMACEN_Msk            

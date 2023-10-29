@@ -30,37 +30,6 @@
 /*===========================================================================*/
 
 /**
- * @name    ISRs suppressed in standard drivers
- * @{
- */
-#define STM32_TIM1_SUPPRESS_ISR
-#define STM32_TIM2_SUPPRESS_ISR
-#define STM32_TIM3_SUPPRESS_ISR
-#define STM32_TIM4_SUPPRESS_ISR
-#define STM32_TIM5_SUPPRESS_ISR
-#define STM32_TIM6_SUPPRESS_ISR
-#define STM32_TIM7_SUPPRESS_ISR
-#define STM32_TIM8_SUPPRESS_ISR
-#define STM32_TIM9_SUPPRESS_ISR
-#define STM32_TIM10_SUPPRESS_ISR
-#define STM32_TIM11_SUPPRESS_ISR
-#define STM32_TIM12_SUPPRESS_ISR
-#define STM32_TIM13_SUPPRESS_ISR
-#define STM32_TIM14_SUPPRESS_ISR
-
-#define STM32_USART1_SUPPRESS_ISR
-#define STM32_USART2_SUPPRESS_ISR
-#define STM32_USART3_SUPPRESS_ISR
-#define STM32_UART4_SUPPRESS_ISR
-#define STM32_UART5_SUPPRESS_ISR
-#define STM32_USART6_SUPPRESS_ISR
-#define STM32_UART7_SUPPRESS_ISR
-#define STM32_UART8_SUPPRESS_ISR
-#define STM32_UART9_SUPPRESS_ISR
-#define STM32_UART10_SUPPRESS_ISR
-/** @} */
-
-/**
  * @name    ISR names and numbers
  * @{
  */
@@ -75,10 +44,6 @@
 #define STM32_CAN2_RX0_HANDLER              Vector140
 #define STM32_CAN2_RX1_HANDLER              Vector144
 #define STM32_CAN2_SCE_HANDLER              Vector148
-#define STM32_CAN3_TX_HANDLER               Vector168
-#define STM32_CAN3_RX0_HANDLER              Vector16C
-#define STM32_CAN3_RX1_HANDLER              Vector170
-#define STM32_CAN3_SCE_HANDLER              Vector174
 
 #define STM32_CAN1_TX_NUMBER                19
 #define STM32_CAN1_RX0_NUMBER               20
@@ -88,10 +53,6 @@
 #define STM32_CAN2_RX0_NUMBER               64
 #define STM32_CAN2_RX1_NUMBER               65
 #define STM32_CAN2_SCE_NUMBER               66
-#define STM32_CAN3_TX_NUMBER                74
-#define STM32_CAN3_RX0_NUMBER               75
-#define STM32_CAN3_RX1_NUMBER               76
-#define STM32_CAN3_SCE_NUMBER               77
 
 /*
  * EXTI unit.
@@ -103,13 +64,13 @@
 #define STM32_EXTI4_HANDLER                 Vector68
 #define STM32_EXTI5_9_HANDLER               Vector9C
 #define STM32_EXTI10_15_HANDLER             VectorE0
-#define STM32_EXTI16_HANDLER                Vector44    /* PVD              */
-#define STM32_EXTI17_HANDLER                VectorE4    /* RTC ALARM        */
-#define STM32_EXTI18_HANDLER                VectorE8    /* USB FS WAKEUP    */
-#define STM32_EXTI19_HANDLER                Vector138   /* ETH WAKEUP       */
-#define STM32_EXTI20_HANDLER                Vector170   /* USB HS WAKEUP    */
-#define STM32_EXTI21_HANDLER                Vector48    /* RTC TAMPER       */
-#define STM32_EXTI22_HANDLER                Vector4C    /* RTC WAKEUP       */
+#define STM32_EXTI16_HANDLER                Vector44    /* PVD               */
+#define STM32_EXTI17_HANDLER                VectorE4    /* RTC ALARM         */
+#define STM32_EXTI18_HANDLER                VectorE8    /* USB FS WAKEUP     */
+#define STM32_EXTI19_HANDLER                Vector138   /* ETH WAKEUP        */
+#define STM32_EXTI20_HANDLER                Vector170   /* USB OTGFS2 WAKEUP */
+#define STM32_EXTI21_HANDLER                Vector48    /* RTC TAMPER        */
+#define STM32_EXTI22_HANDLER                Vector4C    /* RTC WAKEUP        */
 
 #define STM32_EXTI0_NUMBER                  6
 #define STM32_EXTI1_NUMBER                  7
@@ -148,13 +109,13 @@
  */
 #define STM32_OTG1_HANDLER                  Vector14C
 #define STM32_OTG2_HANDLER                  Vector174
-#define STM32_OTG2_EP1OUT_HANDLER           Vector168
-#define STM32_OTG2_EP1IN_HANDLER            Vector16C
+//#define STM32_OTG2_EP1OUT_HANDLER           Vector168
+//#define STM32_OTG2_EP1IN_HANDLER            Vector16C
 
 #define STM32_OTG1_NUMBER                   67
 #define STM32_OTG2_NUMBER                   77
-#define STM32_OTG2_EP1OUT_NUMBER            74
-#define STM32_OTG2_EP1IN_NUMBER             75
+//#define STM32_OTG2_EP1OUT_NUMBER            74
+//#define STM32_OTG2_EP1IN_NUMBER             75
 
 /*
  * SDIO unit.
@@ -177,7 +138,8 @@
 #define STM32_TIM6_HANDLER                  Vector118
 #define STM32_TIM7_HANDLER                  Vector11C
 #define STM32_TIM8_BRK_TIM12_HANDLER        VectorEC
-#define STM32_TIM8_UP_TIM13_HANDLER         VectorF0
+//#define STM32_TIM8_UP_TIM13_HANDLER         VectorF0
+#define STM32_TIM8_UP_HANDLER               VectorF0
 #define STM32_TIM8_TRGCO_TIM14_HANDLER      VectorF4
 #define STM32_TIM8_CC_HANDLER               VectorF8
 
@@ -192,16 +154,10 @@
 #define STM32_TIM6_NUMBER                   54
 #define STM32_TIM7_NUMBER                   55
 #define STM32_TIM8_BRK_TIM12_NUMBER         43
-#define STM32_TIM8_UP_TIM13_NUMBER          44
+//#define STM32_TIM8_UP_TIM13_NUMBER          44
+#define STM32_TIM8_UP_NUMBER                44
 #define STM32_TIM8_TRGCO_TIM14_NUMBER       45
 #define STM32_TIM8_CC_NUMBER                46
-
-/*
- * LPTIM units.
- */
-#define STM32_LPTIM1_HANDLER                Vector1C4
-
-#define STM32_LPTIM1_NUMBER                 97
 
 /*
  * USART units.
@@ -214,8 +170,8 @@
 #define STM32_USART6_HANDLER                Vector15C
 #define STM32_UART7_HANDLER                 Vector188
 #define STM32_UART8_HANDLER                 Vector18C
-#define STM32_UART9_HANDLER                 Vector1A0
-#define STM32_UART10_HANDLER                Vector1A4
+//#define STM32_UART9_HANDLER                 Vector1A0
+//#define STM32_UART10_HANDLER                Vector1A4
 
 #define STM32_USART1_NUMBER                 37
 #define STM32_USART2_NUMBER                 38
@@ -225,13 +181,8 @@
 #define STM32_USART6_NUMBER                 71
 #define STM32_UART7_NUMBER                  82
 #define STM32_UART8_NUMBER                  83
-#define STM32_UART9_NUMBER                  88
-#define STM32_UART10_NUMBER                 89
-
-/*
- * Ethernet
- */
-#define ETH_IRQHandler                      Vector134
+//#define STM32_UART9_NUMBER                  88
+//#define STM32_UART10_NUMBER                 89
 
 /*
  * FSMC
@@ -241,20 +192,11 @@
 #define STM32_FSMC_NUMBER                   48
 
 /*
- * LTDC
- */
-#define STM32_LTDC_EV_HANDLER               Vector1A0
-#define STM32_LTDC_ER_HANDLER               Vector1A4
-
-#define STM32_LTDC_EV_NUMBER                88
-#define STM32_LTDC_ER_NUMBER                89
-
-/*
  * DMA2D
  */
-#define STM32_DMA2D_HANDLER                 Vector1A8
-
-#define STM32_DMA2D_NUMBER                  90
+//#define STM32_DMA2D_HANDLER                 Vector1A8
+//
+//#define STM32_DMA2D_NUMBER                  90
 /** @} */
 
 /*===========================================================================*/
