@@ -138,7 +138,8 @@
 #define STM32_TIM6_HANDLER                  Vector118
 #define STM32_TIM7_HANDLER                  Vector11C
 #define STM32_TIM8_BRK_TIM12_HANDLER        VectorEC
-#define STM32_TIM8_UP_TIM13_HANDLER         VectorF0
+//#define STM32_TIM8_UP_TIM13_HANDLER         VectorF0
+#define STM32_TIM8_UP_HANDLER               VectorF0
 #define STM32_TIM8_TRGCO_TIM14_HANDLER      VectorF4
 #define STM32_TIM8_CC_HANDLER               VectorF8
 
@@ -153,7 +154,8 @@
 #define STM32_TIM6_NUMBER                   54
 #define STM32_TIM7_NUMBER                   55
 #define STM32_TIM8_BRK_TIM12_NUMBER         43
-#define STM32_TIM8_UP_TIM13_NUMBER          44
+//#define STM32_TIM8_UP_TIM13_NUMBER          44
+#define STM32_TIM8_UP_NUMBER                44
 #define STM32_TIM8_TRGCO_TIM14_NUMBER       45
 #define STM32_TIM8_CC_NUMBER                46
 
