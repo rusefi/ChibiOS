@@ -30,37 +30,6 @@
 /*===========================================================================*/
 
 /**
- * @name    ISRs suppressed in standard drivers
- * @{
- */
-#define STM32_TIM1_SUPPRESS_ISR
-#define STM32_TIM2_SUPPRESS_ISR
-#define STM32_TIM3_SUPPRESS_ISR
-#define STM32_TIM4_SUPPRESS_ISR
-#define STM32_TIM5_SUPPRESS_ISR
-#define STM32_TIM6_SUPPRESS_ISR
-#define STM32_TIM7_SUPPRESS_ISR
-#define STM32_TIM8_SUPPRESS_ISR
-#define STM32_TIM9_SUPPRESS_ISR
-#define STM32_TIM10_SUPPRESS_ISR
-#define STM32_TIM11_SUPPRESS_ISR
-#define STM32_TIM12_SUPPRESS_ISR
-#define STM32_TIM13_SUPPRESS_ISR
-#define STM32_TIM14_SUPPRESS_ISR
-
-#define STM32_USART1_SUPPRESS_ISR
-#define STM32_USART2_SUPPRESS_ISR
-#define STM32_USART3_SUPPRESS_ISR
-#define STM32_UART4_SUPPRESS_ISR
-#define STM32_UART5_SUPPRESS_ISR
-#define STM32_USART6_SUPPRESS_ISR
-#define STM32_UART7_SUPPRESS_ISR
-#define STM32_UART8_SUPPRESS_ISR
-#define STM32_UART9_SUPPRESS_ISR
-#define STM32_UART10_SUPPRESS_ISR
-/** @} */
-
-/**
  * @name    ISR names and numbers
  * @{
  */
