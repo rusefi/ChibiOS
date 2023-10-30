@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2019 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2023 Andrey Gusakov
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 /**
  * @file    hal_efl_lld.h
- * @brief   STM32F4xx Embedded Flash subsystem low level driver header.
+ * @brief   AT32F43X Embedded Flash subsystem low level driver header.
  *
  * @addtogroup HAL_EFL
  * @{
@@ -36,14 +36,14 @@
 /*===========================================================================*/
 
 /**
- * @name    STM32F412/413 EFL driver configuration options
+ * @name    AT32F435/437 EFL driver configuration options
  * @{
  */
 /**
  * @brief   Suggested wait time during erase operations polling.
  */
-#if !defined(STM32_FLASH_WAIT_TIME_MS) || defined(__DOXYGEN__)
-#define STM32_FLASH_WAIT_TIME_MS            5
+#if !defined(AT32_FLASH_WAIT_TIME_MS) || defined(__DOXYGEN__)
+#define AT32_FLASH_WAIT_TIME_MS            5
 #endif
 /** @} */
 
@@ -51,67 +51,16 @@
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
 
-#if defined(STM32F413xx) || defined(STM32F412xx) ||                         \
-    defined(STM32F40_41xxx) || defined(__DOXYGEN__)
-
-/* Flash size register. */
-#define STM32_FLASH_SIZE_REGISTER           0x1FFF7A22
-#define STM32_FLASH_SIZE_SCALE              1024U
-
-/*
- * Device flash size...
- *
- */
-#define STM32_FLASH_NUMBER_OF_BANKS         1
-#define STM32_FLASH1_SIZE                   1536U
-#define STM32_FLASH2_SIZE                   1024U
-#define STM32_FLASH1_SECTORS_TOTAL          16
-#define STM32_FLASH2_SECTORS_TOTAL          12
-
-#elif defined(STM32F401xx) || defined(STM32F411xx) ||                         \
+/* TODO: add and use Artery defines */
+#if defined(STM32F429_439xx) || defined(STM32F427_437xx) || \
     defined(__DOXYGEN__)
 
 /* Flash size register. */
-#define STM32_FLASH_SIZE_REGISTER           0x1FFF7A22
-#define STM32_FLASH_SIZE_SCALE              1024U
+#define AT32_FLASH_SIZE_REGISTER            0x1FFFF7E0
+#define AT32_FLASH_SIZE_SCALE               1024U
 
-/*
- * Device flash size...
- *
- */
-#define STM32_FLASH_NUMBER_OF_BANKS         1
-#define STM32_FLASH1_SIZE                   128U
-#define STM32_FLASH2_SIZE                   512U
-#define STM32_FLASH3_SIZE                   384U
-#define STM32_FLASH4_SIZE                   512U
-#define STM32_FLASH1_SECTORS_TOTAL          5
-#define STM32_FLASH2_SECTORS_TOTAL          6
-#define STM32_FLASH3_SECTORS_TOTAL          7
-#define STM32_FLASH4_SECTORS_TOTAL          8
+#define AT32_FLASH_NUMBER_OF_BANKS          2
 
-#elif defined(STM32F429_439xx) || defined(STM32F427_437xx) || \
-      defined(__DOXYGEN__)
-
-/* Flash size register. */
-#define STM32_FLASH_SIZE_REGISTER           0x1FFF7A22
-#define STM32_FLASH_SIZE_SCALE              1024U
-
-/*
- * Device flash size is:
- *  1M for STM32F4x7/4x9 suffix G devices
- *  2M for STM32F4x7/4x9 suffix I devices.
- *
- * For 1M devices SBM is organised as 16K x 4 + 64K + 128K x 7 sectors.
- * For 1M devices DBM is organised as 16K x 4 + 64K + 128K x 3 sectors per bank.
- *
- * For 2M devices are organised as 16K x 4 + 64K + 128K x 7 sectors per bank.
- */
-#define STM32_FLASH_NUMBER_OF_BANKS         2
-#define STM32_FLASH_SIZE_1M                 1024U
-#define STM32_FLASH_SIZE_2M                 2048U
-#define STM32_FLASH_SECTORS_TOTAL_1M_SBM    12
-#define STM32_FLASH_SECTORS_TOTAL_1M_DBM    20
-#define STM32_FLASH_SECTORS_TOTAL_2M        24
 #else
 #error "This EFL driver does not support the selected device"
 #endif
@@ -150,6 +99,7 @@ typedef struct {
 
 #if !defined(__DOXYGEN__)
 extern EFlashDriver EFLD1;
+extern EFlashDriver EFLD2;
 #endif
 
 #ifdef __cplusplus

@@ -526,13 +526,12 @@ typedef struct
 
 typedef struct
 {
-  __IO uint32_t ACR;      /*!< FLASH access control register,   Address offset: 0x00 */
-  __IO uint32_t KEYR;     /*!< FLASH key register,              Address offset: 0x04 */
-  __IO uint32_t OPTKEYR;  /*!< FLASH option key register,       Address offset: 0x08 */
-  __IO uint32_t SR;       /*!< FLASH status register,           Address offset: 0x0C */
-  __IO uint32_t CR;       /*!< FLASH control register,          Address offset: 0x10 */
-  __IO uint32_t OPTCR;    /*!< FLASH option control register ,  Address offset: 0x14 */
-  __IO uint32_t OPTCR1;   /*!< FLASH option control register 1, Address offset: 0x18 */
+  __IO uint32_t PSR;      /*!< FLASH performance select register,     Address offset: 0x00 */
+  __IO uint32_t KEYR;     /*!< FLASH key register,                    Address offset: 0x04 */
+  __IO uint32_t OPTKEYR;  /*!< FLASH option key register,             Address offset: 0x08 */
+  __IO uint32_t STS;      /*!< FLASH status register,                 Address offset: 0x0C */
+  __IO uint32_t CTRL;     /*!< FLASH control register,                Address offset: 0x10 */
+  __IO uint32_t ADDR;     /*!< FLASH address registe,                 Address offset: 0x14 */
 } FLASH_TypeDef;
 
 /** 
@@ -1082,7 +1081,7 @@ typedef struct
 /** @addtogroup Peripheral_memory_map
   * @{
   */
-#define FLASH_BASE            0x08000000U /*!< FLASH(up to 2 MB) base address in the alias region                         */
+#define FLASH_BASE            0x08000000U /*!< FLASH(up to 4 MB) base address in the alias region                         */
 #define CCMDATARAM_BASE       0x10000000U /*!< CCM(core coupled memory) data RAM(64 KB) base address in the alias region  */
 #define SRAM1_BASE            0x20000000U /*!< SRAM1(112 KB) base address in the alias region                              */
 #define SRAM2_BASE            0x2001C000U /*!< SRAM2(16 KB) base address in the alias region                              */
@@ -1191,6 +1190,7 @@ typedef struct
 #define CRC_BASE              (AHB1PERIPH_BASE + 0x3000U)
 #define RCC_BASE              (AHB1PERIPH_BASE + 0x3800U)
 #define FLASH_R_BASE          (AHB1PERIPH_BASE + 0x3C00U)
+#define FLASH2_R_BASE         (FLASH_R_BASE + 0x40U)
 #define DMA1_BASE             (AHB1PERIPH_BASE + 0x6400U)
 #define DMA1_Channel1_BASE    (DMA1_BASE + 0x008U)
 #define DMA1_Channel2_BASE    (DMA1_BASE + 0x01CU)
@@ -1326,7 +1326,8 @@ typedef struct
 #define GPIOK               ((GPIO_TypeDef *) GPIOK_BASE)
 #define CRC                 ((CRC_TypeDef *) CRC_BASE)
 #define RCC                 ((RCC_TypeDef *) RCC_BASE)
-#define FLASH               ((FLASH_TypeDef *) FLASH_R_BASE)
+#define FLASH1              ((FLASH_TypeDef *) FLASH_R_BASE)
+#define FLASH2              ((FLASH_TypeDef *) FLASH2_R_BASE)
 #define DMA1                ((DMA_TypeDef *) DMA1_BASE)
 #define DMA1_Channel1       ((DMA_Channel_TypeDef *) DMA1_Channel1_BASE)
 #define DMA1_Channel2       ((DMA_Channel_TypeDef *) DMA1_Channel2_BASE)
@@ -7105,186 +7106,41 @@ typedef struct
 /*                                    FLASH                                   */
 /*                                                                            */
 /******************************************************************************/
-/*******************  Bits definition for FLASH_ACR register  *****************/
-#define FLASH_ACR_LATENCY_Pos          (0U)                                    
-#define FLASH_ACR_LATENCY_Msk          (0xFU << FLASH_ACR_LATENCY_Pos)         /*!< 0x0000000F */
-#define FLASH_ACR_LATENCY              FLASH_ACR_LATENCY_Msk                   
-#define FLASH_ACR_LATENCY_0WS          0x00000000U                             
-#define FLASH_ACR_LATENCY_1WS          0x00000001U                             
-#define FLASH_ACR_LATENCY_2WS          0x00000002U                             
-#define FLASH_ACR_LATENCY_3WS          0x00000003U                             
-#define FLASH_ACR_LATENCY_4WS          0x00000004U                             
-#define FLASH_ACR_LATENCY_5WS          0x00000005U                             
-#define FLASH_ACR_LATENCY_6WS          0x00000006U                             
-#define FLASH_ACR_LATENCY_7WS          0x00000007U                             
+/*******************  Bits definition for FLASH_STS register  *****************/
+#define FLASH_STS_OBF_Pos              (0U)                                   
+#define FLASH_STS_OBF_Msk              (0x1U << FLASH_STS_OBF_Pos)             /*!< 0x00000001 */
+#define FLASH_STS_OBF                  FLASH_STS_OBF_Msk      
+#define FLASH_STS_PRGMERR_Pos          (2U)                                    
+#define FLASH_STS_PRGMERR_Msk          (0x1U << FLASH_STS_PRGMERR_Pos)         /*!< 0x00000004 */
+#define FLASH_STS_PRGMERR              FLASH_STS_PRGMERR_Msk                        
+#define FLASH_STS_EPPERR_Pos           (4U)                                    
+#define FLASH_STS_EPPERR_Msk           (0x1U << FLASH_STS_EPPERR_Pos)          /*!< 0x00000010 */
+#define FLASH_STS_EPPERR               FLASH_STS_EPPERR_Msk                     
+#define FLASH_STS_ODF_Pos              (5U)                                    
+#define FLASH_STS_ODF_Msk              (0x1U << FLASH_STS_ODF_Pos)             /*!< 0x00000020 */
+#define FLASH_STS_ODF                  FLASH_STS_ODF_Msk                     
+                                 
 
-#define FLASH_ACR_LATENCY_8WS          0x00000008U                             
-#define FLASH_ACR_LATENCY_9WS          0x00000009U                             
-#define FLASH_ACR_LATENCY_10WS         0x0000000AU                             
-#define FLASH_ACR_LATENCY_11WS         0x0000000BU                             
-#define FLASH_ACR_LATENCY_12WS         0x0000000CU                             
-#define FLASH_ACR_LATENCY_13WS         0x0000000DU                             
-#define FLASH_ACR_LATENCY_14WS         0x0000000EU                             
-#define FLASH_ACR_LATENCY_15WS         0x0000000FU                             
-#define FLASH_ACR_PRFTEN_Pos           (8U)                                    
-#define FLASH_ACR_PRFTEN_Msk           (0x1U << FLASH_ACR_PRFTEN_Pos)          /*!< 0x00000100 */
-#define FLASH_ACR_PRFTEN               FLASH_ACR_PRFTEN_Msk                    
-#define FLASH_ACR_ICEN_Pos             (9U)                                    
-#define FLASH_ACR_ICEN_Msk             (0x1U << FLASH_ACR_ICEN_Pos)            /*!< 0x00000200 */
-#define FLASH_ACR_ICEN                 FLASH_ACR_ICEN_Msk                      
-#define FLASH_ACR_DCEN_Pos             (10U)                                   
-#define FLASH_ACR_DCEN_Msk             (0x1U << FLASH_ACR_DCEN_Pos)            /*!< 0x00000400 */
-#define FLASH_ACR_DCEN                 FLASH_ACR_DCEN_Msk                      
-#define FLASH_ACR_ICRST_Pos            (11U)                                   
-#define FLASH_ACR_ICRST_Msk            (0x1U << FLASH_ACR_ICRST_Pos)           /*!< 0x00000800 */
-#define FLASH_ACR_ICRST                FLASH_ACR_ICRST_Msk                     
-#define FLASH_ACR_DCRST_Pos            (12U)                                   
-#define FLASH_ACR_DCRST_Msk            (0x1U << FLASH_ACR_DCRST_Pos)           /*!< 0x00001000 */
-#define FLASH_ACR_DCRST                FLASH_ACR_DCRST_Msk                     
-#define FLASH_ACR_BYTE0_ADDRESS_Pos    (10U)                                   
-#define FLASH_ACR_BYTE0_ADDRESS_Msk    (0x10008FU << FLASH_ACR_BYTE0_ADDRESS_Pos) /*!< 0x40023C00 */
-#define FLASH_ACR_BYTE0_ADDRESS        FLASH_ACR_BYTE0_ADDRESS_Msk             
-#define FLASH_ACR_BYTE2_ADDRESS_Pos    (0U)                                    
-#define FLASH_ACR_BYTE2_ADDRESS_Msk    (0x40023C03U << FLASH_ACR_BYTE2_ADDRESS_Pos) /*!< 0x40023C03 */
-#define FLASH_ACR_BYTE2_ADDRESS        FLASH_ACR_BYTE2_ADDRESS_Msk             
-
-/*******************  Bits definition for FLASH_SR register  ******************/
-#define FLASH_SR_EOP_Pos               (0U)                                    
-#define FLASH_SR_EOP_Msk               (0x1U << FLASH_SR_EOP_Pos)              /*!< 0x00000001 */
-#define FLASH_SR_EOP                   FLASH_SR_EOP_Msk                        
-#define FLASH_SR_SOP_Pos               (1U)                                    
-#define FLASH_SR_SOP_Msk               (0x1U << FLASH_SR_SOP_Pos)              /*!< 0x00000002 */
-#define FLASH_SR_SOP                   FLASH_SR_SOP_Msk                        
-#define FLASH_SR_WRPERR_Pos            (4U)                                    
-#define FLASH_SR_WRPERR_Msk            (0x1U << FLASH_SR_WRPERR_Pos)           /*!< 0x00000010 */
-#define FLASH_SR_WRPERR                FLASH_SR_WRPERR_Msk                     
-#define FLASH_SR_PGAERR_Pos            (5U)                                    
-#define FLASH_SR_PGAERR_Msk            (0x1U << FLASH_SR_PGAERR_Pos)           /*!< 0x00000020 */
-#define FLASH_SR_PGAERR                FLASH_SR_PGAERR_Msk                     
-#define FLASH_SR_PGPERR_Pos            (6U)                                    
-#define FLASH_SR_PGPERR_Msk            (0x1U << FLASH_SR_PGPERR_Pos)           /*!< 0x00000040 */
-#define FLASH_SR_PGPERR                FLASH_SR_PGPERR_Msk                     
-#define FLASH_SR_PGSERR_Pos            (7U)                                    
-#define FLASH_SR_PGSERR_Msk            (0x1U << FLASH_SR_PGSERR_Pos)           /*!< 0x00000080 */
-#define FLASH_SR_PGSERR                FLASH_SR_PGSERR_Msk                     
-#define FLASH_SR_RDERR_Pos            (8U)                                    
-#define FLASH_SR_RDERR_Msk            (0x1U << FLASH_SR_RDERR_Pos)             /*!< 0x00000100 */
-#define FLASH_SR_RDERR                FLASH_SR_RDERR_Msk                     
-#define FLASH_SR_BSY_Pos               (16U)                                   
-#define FLASH_SR_BSY_Msk               (0x1U << FLASH_SR_BSY_Pos)              /*!< 0x00010000 */
-#define FLASH_SR_BSY                   FLASH_SR_BSY_Msk                        
-
-/*******************  Bits definition for FLASH_CR register  ******************/
-#define FLASH_CR_PG_Pos                (0U)                                    
-#define FLASH_CR_PG_Msk                (0x1U << FLASH_CR_PG_Pos)               /*!< 0x00000001 */
-#define FLASH_CR_PG                    FLASH_CR_PG_Msk                         
-#define FLASH_CR_SER_Pos               (1U)                                    
-#define FLASH_CR_SER_Msk               (0x1U << FLASH_CR_SER_Pos)              /*!< 0x00000002 */
-#define FLASH_CR_SER                   FLASH_CR_SER_Msk                        
-#define FLASH_CR_MER_Pos               (2U)                                    
-#define FLASH_CR_MER_Msk               (0x1U << FLASH_CR_MER_Pos)              /*!< 0x00000004 */
-#define FLASH_CR_MER                   FLASH_CR_MER_Msk                        
-#define FLASH_CR_MER1                        FLASH_CR_MER
-#define FLASH_CR_SNB_Pos               (3U)                                    
-#define FLASH_CR_SNB_Msk               (0x1FU << FLASH_CR_SNB_Pos)             /*!< 0x000000F8 */
-#define FLASH_CR_SNB                   FLASH_CR_SNB_Msk                        
-#define FLASH_CR_SNB_0                 (0x01U << FLASH_CR_SNB_Pos)             /*!< 0x00000008 */
-#define FLASH_CR_SNB_1                 (0x02U << FLASH_CR_SNB_Pos)             /*!< 0x00000010 */
-#define FLASH_CR_SNB_2                 (0x04U << FLASH_CR_SNB_Pos)             /*!< 0x00000020 */
-#define FLASH_CR_SNB_3                 (0x08U << FLASH_CR_SNB_Pos)             /*!< 0x00000040 */
-#define FLASH_CR_SNB_4                 (0x10U << FLASH_CR_SNB_Pos)             /*!< 0x00000080 */
-#define FLASH_CR_PSIZE_Pos             (8U)                                    
-#define FLASH_CR_PSIZE_Msk             (0x3U << FLASH_CR_PSIZE_Pos)            /*!< 0x00000300 */
-#define FLASH_CR_PSIZE                 FLASH_CR_PSIZE_Msk                      
-#define FLASH_CR_PSIZE_0               (0x1U << FLASH_CR_PSIZE_Pos)            /*!< 0x00000100 */
-#define FLASH_CR_PSIZE_1               (0x2U << FLASH_CR_PSIZE_Pos)            /*!< 0x00000200 */
-#define FLASH_CR_MER2_Pos              (15U)                                   
-#define FLASH_CR_MER2_Msk              (0x1U << FLASH_CR_MER2_Pos)             /*!< 0x00008000 */
-#define FLASH_CR_MER2                  FLASH_CR_MER2_Msk                       
-#define FLASH_CR_STRT_Pos              (16U)                                   
-#define FLASH_CR_STRT_Msk              (0x1U << FLASH_CR_STRT_Pos)             /*!< 0x00010000 */
-#define FLASH_CR_STRT                  FLASH_CR_STRT_Msk                       
-#define FLASH_CR_EOPIE_Pos             (24U)                                   
-#define FLASH_CR_EOPIE_Msk             (0x1U << FLASH_CR_EOPIE_Pos)            /*!< 0x01000000 */
-#define FLASH_CR_EOPIE                 FLASH_CR_EOPIE_Msk                      
-#define FLASH_CR_LOCK_Pos              (31U)                                   
-#define FLASH_CR_LOCK_Msk              (0x1U << FLASH_CR_LOCK_Pos)             /*!< 0x80000000 */
-#define FLASH_CR_LOCK                  FLASH_CR_LOCK_Msk                       
-
-/*******************  Bits definition for FLASH_OPTCR register  ***************/
-#define FLASH_OPTCR_OPTLOCK_Pos        (0U)                                    
-#define FLASH_OPTCR_OPTLOCK_Msk        (0x1U << FLASH_OPTCR_OPTLOCK_Pos)       /*!< 0x00000001 */
-#define FLASH_OPTCR_OPTLOCK            FLASH_OPTCR_OPTLOCK_Msk                 
-#define FLASH_OPTCR_OPTSTRT_Pos        (1U)                                    
-#define FLASH_OPTCR_OPTSTRT_Msk        (0x1U << FLASH_OPTCR_OPTSTRT_Pos)       /*!< 0x00000002 */
-#define FLASH_OPTCR_OPTSTRT            FLASH_OPTCR_OPTSTRT_Msk                 
-
-#define FLASH_OPTCR_BOR_LEV_0          0x00000004U                             
-#define FLASH_OPTCR_BOR_LEV_1          0x00000008U                             
-#define FLASH_OPTCR_BOR_LEV_Pos        (2U)                                    
-#define FLASH_OPTCR_BOR_LEV_Msk        (0x3U << FLASH_OPTCR_BOR_LEV_Pos)       /*!< 0x0000000C */
-#define FLASH_OPTCR_BOR_LEV            FLASH_OPTCR_BOR_LEV_Msk                 
-#define FLASH_OPTCR_BFB2_Pos           (4U)                                    
-#define FLASH_OPTCR_BFB2_Msk           (0x1U << FLASH_OPTCR_BFB2_Pos)          /*!< 0x00000010 */
-#define FLASH_OPTCR_BFB2               FLASH_OPTCR_BFB2_Msk                    
-#define FLASH_OPTCR_WDG_SW_Pos         (5U)                                    
-#define FLASH_OPTCR_WDG_SW_Msk         (0x1U << FLASH_OPTCR_WDG_SW_Pos)        /*!< 0x00000020 */
-#define FLASH_OPTCR_WDG_SW             FLASH_OPTCR_WDG_SW_Msk                  
-#define FLASH_OPTCR_nRST_STOP_Pos      (6U)                                    
-#define FLASH_OPTCR_nRST_STOP_Msk      (0x1U << FLASH_OPTCR_nRST_STOP_Pos)     /*!< 0x00000040 */
-#define FLASH_OPTCR_nRST_STOP          FLASH_OPTCR_nRST_STOP_Msk               
-#define FLASH_OPTCR_nRST_STDBY_Pos     (7U)                                    
-#define FLASH_OPTCR_nRST_STDBY_Msk     (0x1U << FLASH_OPTCR_nRST_STDBY_Pos)    /*!< 0x00000080 */
-#define FLASH_OPTCR_nRST_STDBY         FLASH_OPTCR_nRST_STDBY_Msk              
-#define FLASH_OPTCR_RDP_Pos            (8U)                                    
-#define FLASH_OPTCR_RDP_Msk            (0xFFU << FLASH_OPTCR_RDP_Pos)          /*!< 0x0000FF00 */
-#define FLASH_OPTCR_RDP                FLASH_OPTCR_RDP_Msk                     
-#define FLASH_OPTCR_RDP_0              (0x01U << FLASH_OPTCR_RDP_Pos)          /*!< 0x00000100 */
-#define FLASH_OPTCR_RDP_1              (0x02U << FLASH_OPTCR_RDP_Pos)          /*!< 0x00000200 */
-#define FLASH_OPTCR_RDP_2              (0x04U << FLASH_OPTCR_RDP_Pos)          /*!< 0x00000400 */
-#define FLASH_OPTCR_RDP_3              (0x08U << FLASH_OPTCR_RDP_Pos)          /*!< 0x00000800 */
-#define FLASH_OPTCR_RDP_4              (0x10U << FLASH_OPTCR_RDP_Pos)          /*!< 0x00001000 */
-#define FLASH_OPTCR_RDP_5              (0x20U << FLASH_OPTCR_RDP_Pos)          /*!< 0x00002000 */
-#define FLASH_OPTCR_RDP_6              (0x40U << FLASH_OPTCR_RDP_Pos)          /*!< 0x00004000 */
-#define FLASH_OPTCR_RDP_7              (0x80U << FLASH_OPTCR_RDP_Pos)          /*!< 0x00008000 */
-#define FLASH_OPTCR_nWRP_Pos           (16U)                                   
-#define FLASH_OPTCR_nWRP_Msk           (0xFFFU << FLASH_OPTCR_nWRP_Pos)        /*!< 0x0FFF0000 */
-#define FLASH_OPTCR_nWRP               FLASH_OPTCR_nWRP_Msk                    
-#define FLASH_OPTCR_nWRP_0             0x00010000U                             
-#define FLASH_OPTCR_nWRP_1             0x00020000U                             
-#define FLASH_OPTCR_nWRP_2             0x00040000U                             
-#define FLASH_OPTCR_nWRP_3             0x00080000U                             
-#define FLASH_OPTCR_nWRP_4             0x00100000U                             
-#define FLASH_OPTCR_nWRP_5             0x00200000U                             
-#define FLASH_OPTCR_nWRP_6             0x00400000U                             
-#define FLASH_OPTCR_nWRP_7             0x00800000U                             
-#define FLASH_OPTCR_nWRP_8             0x01000000U                             
-#define FLASH_OPTCR_nWRP_9             0x02000000U                             
-#define FLASH_OPTCR_nWRP_10            0x04000000U                             
-#define FLASH_OPTCR_nWRP_11            0x08000000U                             
-#define FLASH_OPTCR_DB1M_Pos           (30U)                                   
-#define FLASH_OPTCR_DB1M_Msk           (0x1U << FLASH_OPTCR_DB1M_Pos)          /*!< 0x40000000 */
-#define FLASH_OPTCR_DB1M               FLASH_OPTCR_DB1M_Msk                    
-#define FLASH_OPTCR_SPRMOD_Pos         (31U)                                   
-#define FLASH_OPTCR_SPRMOD_Msk         (0x1U << FLASH_OPTCR_SPRMOD_Pos)        /*!< 0x80000000 */
-#define FLASH_OPTCR_SPRMOD             FLASH_OPTCR_SPRMOD_Msk                  
-                                             
-/******************  Bits definition for FLASH_OPTCR1 register  ***************/
-#define FLASH_OPTCR1_nWRP_Pos          (16U)                                   
-#define FLASH_OPTCR1_nWRP_Msk          (0xFFFU << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x0FFF0000 */
-#define FLASH_OPTCR1_nWRP              FLASH_OPTCR1_nWRP_Msk                   
-#define FLASH_OPTCR1_nWRP_0            (0x001U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x00010000 */
-#define FLASH_OPTCR1_nWRP_1            (0x002U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x00020000 */
-#define FLASH_OPTCR1_nWRP_2            (0x004U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x00040000 */
-#define FLASH_OPTCR1_nWRP_3            (0x008U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x00080000 */
-#define FLASH_OPTCR1_nWRP_4            (0x010U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x00100000 */
-#define FLASH_OPTCR1_nWRP_5            (0x020U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x00200000 */
-#define FLASH_OPTCR1_nWRP_6            (0x040U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x00400000 */
-#define FLASH_OPTCR1_nWRP_7            (0x080U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x00800000 */
-#define FLASH_OPTCR1_nWRP_8            (0x100U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x01000000 */
-#define FLASH_OPTCR1_nWRP_9            (0x200U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x02000000 */
-#define FLASH_OPTCR1_nWRP_10           (0x400U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x04000000 */
-#define FLASH_OPTCR1_nWRP_11           (0x800U << FLASH_OPTCR1_nWRP_Pos)       /*!< 0x08000000 */
+/*******************  Bits definition for FLASH_CTRL register  ****************/
+#define FLASH_CTRL_PRGM_Pos            (0U)                                    
+#define FLASH_CTRL_PRGM_Msk            (0x1U << FLASH_CTRL_PRGM_Pos)           /*!< 0x00000001 */
+#define FLASH_CTRL_PRGM                FLASH_CTRL_PRGM_Msk                         
+#define FLASH_CTRL_SECERS_Pos          (1U)                                    
+#define FLASH_CTRL_SECERS_Msk          (0x1U << FLASH_CTRL_SECERS_Pos)         /*!< 0x00000002 */
+#define FLASH_CTRL_SECERS              FLASH_CTRL_SECERS_Msk                        
+#define FLASH_CTRL_BANKERS_Pos         (2U)                                    
+#define FLASH_CTRL_BANKERS_Msk         (0x1U << FLASH_CTRL_BANKERS_Pos)        /*!< 0x00000004 */
+#define FLASH_CTRL_BANKERS             FLASH_CTRL_BANKERS_Msk                        
+#define FLASH_CTRL_BLKERS_Pos          (3U)                                    
+#define FLASH_CTRL_BLKERS_Msk          (0x1U << FLASH_CTRL_BLKERS_Pos)         /*!< 0x000000F8 */
+#define FLASH_CTRL_BLKERS              FLASH_CTRL_BLKERS_Msk                        
+/* USER area erase and program */
+#define FLASH_CTRL_ERSTR_Pos           (6U)                                   
+#define FLASH_CTRL_ERSTR_Msk           (0x1U << FLASH_CTRL_ERSTR_Pos)          /*!< 0x80000080 */
+#define FLASH_CTRL_ERSTR               FLASH_CTRL_ERSTR_Msk 
+#define FLASH_CTRL_LOCK_Pos            (7U)                                   
+#define FLASH_CTRL_LOCK_Msk            (0x1U << FLASH_CTRL_LOCK_Pos)           /*!< 0x80000080 */
+#define FLASH_CTRL_LOCK                FLASH_CTRL_LOCK_Msk                       
 
 /******************************************************************************/
 /*                                                                            */
