@@ -346,6 +346,8 @@ typedef struct
   __IO uint32_t CR;      /*!< Debug MCU configuration register, Address offset: 0x04 */
   __IO uint32_t APB1FZ;  /*!< Debug MCU APB1 freeze register,   Address offset: 0x08 */
   __IO uint32_t APB2FZ;  /*!< Debug MCU APB2 freeze register,   Address offset: 0x0C */
+  uint32_t      RESERVED[4]; /*!< Reserved, 0x10-0x1F */
+  __IO uint32_t SERID;   /*!< MCU SERIES ID register,           Address offset: 0x20 */
 }DBGMCU_TypeDef;
 
 /** 
@@ -1248,9 +1250,9 @@ typedef struct
 #define USB_OTG_FIFO_BASE                    0x1000U
 #define USB_OTG_FIFO_SIZE                    0x1000U
 
-#define UID_BASE                     0x1FFF7A10U           /*!< Unique device ID register base address */
-#define FLASHSIZE_BASE               0x1FFF7A22U           /*!< FLASH Size register base address       */
-#define PACKAGE_BASE                 0x1FFF7BF0U           /*!< Package size register base address     */
+#define UID_BASE                     0x1FFFF7E8U           /*!< Unique device ID register base address */
+#define FLASHSIZE_BASE               0x1FFFF7E0U           /*!< FLASH Size register base address       */
+//#define PACKAGE_BASE                 0x1FFF7BF0U           /*!< Package size register base address     */
 /**
   * @}
   */
