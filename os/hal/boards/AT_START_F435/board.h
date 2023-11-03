@@ -324,8 +324,11 @@
  */
 
 #define LINE_LED1                   PAL_LINE(GPIOD, 13U)
+#define LINE_LED_RED                LINE_LED1
 #define LINE_LED2                   PAL_LINE(GPIOD, 14U)
+#define LINE_LED_YELLOW             LINE_LED2
 #define LINE_LED3                   PAL_LINE(GPIOD, 15U)
+#define LINE_LED_GREEN              LINE_LED3
 
 #define LINE_BUTTON                 PAL_LINE(GPIOA, 0U)
 

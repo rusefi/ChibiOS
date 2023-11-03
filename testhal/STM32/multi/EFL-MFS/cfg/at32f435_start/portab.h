@@ -15,59 +15,64 @@
 */
 
 /**
- * @file    portab.c
- * @brief   Application portability module code.
+ * @file    portab.h
+ * @brief   Application portability macros and structures.
  *
  * @addtogroup application_portability
  * @{
  */
 
-#include "hal.h"
-
-#include "hal_mfs.h"
-
-#include "portab.h"
+#ifndef PORTAB_H
+#define PORTAB_H
 
 /*===========================================================================*/
-/* Module local definitions.                                                 */
+/* Module constants.                                                         */
 /*===========================================================================*/
 
-/*===========================================================================*/
-/* Module exported variables.                                                */
-/*===========================================================================*/
+#define PORTAB_LINE_LED1            LINE_LED_GREEN
+#define PORTAB_LINE_LED2            LINE_LED_RED
+#define PORTAB_LED_OFF              PAL_HIGH
+#define PORTAB_LED_ON               PAL_LOW
 
-const MFSConfig mfscfg1 = {
-  .flashp           = (BaseFlash *)&EFLD1,
-  .erased           = 0xFFFFFFFFU,
-  .bank_size        = 4096U,
-  .bank0_start      = 128U,
-  .bank0_sectors    = 2U,
-  .bank1_start      = 130U,
-  .bank1_sectors    = 2U
-};
+#define PORTAB_LINE_BUTTON          LINE_BUTTON
+#define PORTAB_BUTTON_PRESSED       PAL_HIGH
+
+#define PORTAB_SD1                  SD1
+
+#define PORTAB_EFLD                 EFLD2
 
 /*===========================================================================*/
-/* Module local types.                                                       */
+/* Module pre-compile time settings.                                         */
 /*===========================================================================*/
 
 /*===========================================================================*/
-/* Module local variables.                                                   */
+/* Derived constants and error checks.                                       */
 /*===========================================================================*/
 
 /*===========================================================================*/
-/* Module local functions.                                                   */
+/* Module data structures and types.                                         */
 /*===========================================================================*/
 
 /*===========================================================================*/
-/* Module exported functions.                                                */
+/* Module macros.                                                            */
 /*===========================================================================*/
 
-void portab_setup(void) {
+/*===========================================================================*/
+/* External declarations.                                                    */
+/*===========================================================================*/
 
-  /*
-   * LED line as output.
-   */
-  palSetLineMode(LINE_LED_GREEN, PAL_MODE_OUTPUT_PUSHPULL);
+#ifdef __cplusplus
+extern "C" {
+#endif
+  void portab_setup(void);
+#ifdef __cplusplus
 }
+#endif
+
+/*===========================================================================*/
+/* Module inline functions.                                                  */
+/*===========================================================================*/
+
+#endif /* PORTAB_H */
 
 /** @} */
