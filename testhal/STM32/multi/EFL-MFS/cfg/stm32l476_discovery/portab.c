@@ -24,6 +24,8 @@
 
 #include "hal.h"
 
+#include "hal_mfs.h"
+
 #include "portab.h"
 
 /*===========================================================================*/
@@ -33,6 +35,16 @@
 /*===========================================================================*/
 /* Module exported variables.                                                */
 /*===========================================================================*/
+
+const MFSConfig mfscfg1 = {
+  .flashp           = (BaseFlash *)&EFLD1,
+  .erased           = 0xFFFFFFFFU,
+  .bank_size        = 4096U,
+  .bank0_start      = 128U,
+  .bank0_sectors    = 2U,
+  .bank1_start      = 130U,
+  .bank1_sectors    = 2U
+};
 
 /*===========================================================================*/
 /* Module local types.                                                       */
