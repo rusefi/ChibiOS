@@ -25,15 +25,7 @@
 
 #include "portab.h"
 
-const MFSConfig mfscfg1 = {
-  .flashp           = (BaseFlash *)&EFLD1,
-  .erased           = 0xFFFFFFFFU,
-  .bank_size        = 4096U,
-  .bank0_start      = 128U,
-  .bank0_sectors    = 2U,
-  .bank1_start      = 130U,
-  .bank1_sectors    = 2U
-};
+extern const MFSConfig mfscfg1;
 
 /*
  * LED blinker thread, times are in milliseconds.
@@ -70,7 +62,7 @@ int main(void) {
   portab_setup();
 
   /* Starting EFL driver.*/
-  eflStart(&EFLD1, NULL);
+  eflStart(&PORTAB_EFLD, NULL);
 
   /* Starting a serial port for test report output.*/
   sdStart(&PORTAB_SD1, NULL);
