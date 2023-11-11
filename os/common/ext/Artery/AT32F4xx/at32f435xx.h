@@ -534,6 +534,30 @@ typedef struct
   __IO uint32_t ADDR;     /*!< FLASH address registe,                 Address offset: 0x14 */
 } FLASH_TypeDef;
 
+
+/**
+  * @brief user system data
+  */
+typedef struct
+{
+  __IO uint16_t fap;
+  __IO uint16_t ssb;
+  __IO uint16_t data0;
+  __IO uint16_t data1;
+  __IO uint16_t epp0;
+  __IO uint16_t epp1;
+  __IO uint16_t epp2;
+  __IO uint16_t epp3;
+  __IO uint16_t eopb0;
+  __IO uint16_t reserved1;
+  __IO uint16_t epp4;
+  __IO uint16_t epp5;
+  __IO uint16_t epp6;
+  __IO uint16_t epp7;
+  __IO uint16_t reserved2[12];
+  __IO uint16_t qspikey[8];
+} USD_TypeDef;
+
 /** 
   * @brief Flexible Memory Controller
   */
@@ -1083,6 +1107,7 @@ typedef struct
   */
 #define FLASH_BASE            0x08000000U /*!< FLASH(up to 4 MB) base address in the alias region                         */
 #define CCMDATARAM_BASE       0x10000000U /*!< CCM(core coupled memory) data RAM(64 KB) base address in the alias region  */
+#define USD_BASE              0x1fffc000U /*!< User system data                                                           */
 #define SRAM1_BASE            0x20000000U /*!< SRAM1(112 KB) base address in the alias region                              */
 #define SRAM2_BASE            0x2001C000U /*!< SRAM2(16 KB) base address in the alias region                              */
 #define SRAM3_BASE            0x20020000U /*!< SRAM3(64 KB) base address in the alias region                              */
@@ -1328,6 +1353,7 @@ typedef struct
 #define RCC                 ((RCC_TypeDef *) RCC_BASE)
 #define FLASH1              ((FLASH_TypeDef *) FLASH_R_BASE)
 #define FLASH2              ((FLASH_TypeDef *) FLASH2_R_BASE)
+#define USD                 ((USD_TypeDef *) USD_BASE)
 #define DMA1                ((DMA_TypeDef *) DMA1_BASE)
 #define DMA1_Channel1       ((DMA_Channel_TypeDef *) DMA1_Channel1_BASE)
 #define DMA1_Channel2       ((DMA_Channel_TypeDef *) DMA1_Channel2_BASE)
@@ -7132,15 +7158,23 @@ typedef struct
 #define FLASH_CTRL_BANKERS_Msk         (0x1U << FLASH_CTRL_BANKERS_Pos)        /*!< 0x00000004 */
 #define FLASH_CTRL_BANKERS             FLASH_CTRL_BANKERS_Msk                        
 #define FLASH_CTRL_BLKERS_Pos          (3U)                                    
-#define FLASH_CTRL_BLKERS_Msk          (0x1U << FLASH_CTRL_BLKERS_Pos)         /*!< 0x000000F8 */
+#define FLASH_CTRL_BLKERS_Msk          (0x1U << FLASH_CTRL_BLKERS_Pos)         /*!< 0x00000008 */
 #define FLASH_CTRL_BLKERS              FLASH_CTRL_BLKERS_Msk                        
-/* USER area erase and program */
+#define FLASH_CTRL_USDPRGM_Pos         (4U)                                    
+#define FLASH_CTRL_USDPRGM_Msk         (0x1U << FLASH_CTRL_USDPRGM_Pos)        /*!< 0x00000010 */
+#define FLASH_CTRL_USDPRGM             FLASH_CTRL_USDPRGM_Msk                         
+#define FLASH_CTRL_USDERS_Pos          (5U)                                    
+#define FLASH_CTRL_USDERS_Msk          (0x1U << FLASH_CTRL_USDERS_Pos)         /*!< 0x00000020 */
+#define FLASH_CTRL_USDERS              FLASH_CTRL_USDERS_Msk                        
 #define FLASH_CTRL_ERSTR_Pos           (6U)                                   
-#define FLASH_CTRL_ERSTR_Msk           (0x1U << FLASH_CTRL_ERSTR_Pos)          /*!< 0x80000080 */
+#define FLASH_CTRL_ERSTR_Msk           (0x1U << FLASH_CTRL_ERSTR_Pos)          /*!< 0x00000040 */
 #define FLASH_CTRL_ERSTR               FLASH_CTRL_ERSTR_Msk 
 #define FLASH_CTRL_LOCK_Pos            (7U)                                   
-#define FLASH_CTRL_LOCK_Msk            (0x1U << FLASH_CTRL_LOCK_Pos)           /*!< 0x80000080 */
+#define FLASH_CTRL_LOCK_Msk            (0x1U << FLASH_CTRL_LOCK_Pos)           /*!< 0x00000080 */
 #define FLASH_CTRL_LOCK                FLASH_CTRL_LOCK_Msk                       
+#define FLASH_CTRL_ULOCK_Pos           (9U)                                   
+#define FLASH_CTRL_ULOCK_Msk           (0x1U << FLASH_CTRL_ULOCK_Pos)          /*!< 0x00000200 */
+#define FLASH_CTRL_ULOCK               FLASH_CTRL_ULOCK_Msk                       
 
 /******************************************************************************/
 /*                                                                            */
