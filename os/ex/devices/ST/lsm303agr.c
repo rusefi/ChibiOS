@@ -66,11 +66,11 @@ typedef enum {
  * @param[in] n          size of rxbuf.
  * @return               the operation status.
  */
-static msg_t lsm303agrI2CReadRegister(I2CDriver *i2cp, lsm303agr_sad_t sad,
-                                      uint8_t reg, uint8_t *rxbuf, size_t n) {
+static msg_t lsm303agrReadRegister(const LSM303AGRConfig *config, lsm303agr_sad_t sad,
+                                   uint8_t reg, uint8_t *rxbuf, size_t n) {
 
   uint8_t txbuf = reg | LSM303AGR_MS;
-  return i2cMasterTransmitTimeout(i2cp, sad, &txbuf, 1, rxbuf, n,
+  return i2cMasterTransmitTimeout(config->i2cp, sad, &txbuf, 1, rxbuf, n,
                                   TIME_INFINITE);
 }
 
@@ -86,11 +86,11 @@ static msg_t lsm303agrI2CReadRegister(I2CDriver *i2cp, lsm303agr_sad_t sad,
  *                      element).
  * @return              the operation status.
  */
-static msg_t lsm303agrI2CWriteRegister(I2CDriver *i2cp, lsm303agr_sad_t sad,
-                                       uint8_t *txbuf, size_t n) {
+static msg_t lsm303agrWriteRegister(const LSM303AGRConfig *config, lsm303agr_sad_t sad,
+                                    uint8_t *txbuf, size_t n) {
   if (n != 1)
     *txbuf |= LSM303AGR_MS;
-  return i2cMasterTransmitTimeout(i2cp, sad, txbuf, n + 1, NULL, 0,
+  return i2cMasterTransmitTimeout(config->i2cp, sad, txbuf, n + 1, NULL, 0,
                                   TIME_INFINITE);
 }
 
@@ -145,9 +145,9 @@ static msg_t acc_read_raw(void *ip, int32_t axes[]) {
   osalDbgAssert((devp->config->i2cp->state == I2C_READY),
                 "acc_read_raw(), channel not ready");
 
-  msg = lsm303agrI2CReadRegister(devp->config->i2cp, LSM303AGR_SAD_ACC,
-                                  LSM303AGR_AD_OUT_X_L_A, buff,
-                                  LSM303AGR_ACC_NUMBER_OF_AXES * 2);
+  msg = lsm303agrReadRegister(devp->config, LSM303AGR_SAD_ACC,
+                              LSM303AGR_AD_OUT_X_L_A, buff,
+                              LSM303AGR_ACC_NUMBER_OF_AXES * 2);
 
 #if LSM303AGR_SHARED_I2C
   i2cReleaseBus(devp->config->i2cp);
@@ -395,10 +395,10 @@ static msg_t acc_set_full_scale(LSM303AGRDriver *devp,
                   "acc_set_full_scale(), channel not ready");
 
     /* Updating register.*/
-    msg = lsm303agrI2CReadRegister(devp->config->i2cp,
-                                   LSM303AGR_SAD_ACC,
-                                   LSM303AGR_AD_CTRL_REG4_A,
-                                   &buff[1], 1);
+    msg = lsm303agrReadRegister(devp->config,
+                                LSM303AGR_SAD_ACC,
+                                LSM303AGR_AD_CTRL_REG4_A,
+                                &buff[1], 1);
 
     if(msg != MSG_OK)
       return msg;
@@ -407,8 +407,8 @@ static msg_t acc_set_full_scale(LSM303AGRDriver *devp,
     buff[1] |= fs;
     buff[0] = LSM303AGR_AD_CTRL_REG4_A;
 
-    msg = lsm303agrI2CWriteRegister(devp->config->i2cp,
-                                    LSM303AGR_SAD_ACC, buff, 1);
+    msg = lsm303agrWriteRegister(devp->config,
+                                 LSM303AGR_SAD_ACC, buff, 1);
 
 #if LSM303AGR_SHARED_I2C
 		i2cReleaseBus(devp->config->i2cp);
@@ -477,9 +477,9 @@ static msg_t comp_read_raw(void *ip, int32_t axes[]) {
   osalDbgAssert((devp->config->i2cp->state == I2C_READY),
                 "comp_read_raw(), channel not ready");
 
-  msg = lsm303agrI2CReadRegister(devp->config->i2cp, LSM303AGR_SAD_COMP,
-                                  LSM303AGR_AD_OUTX_L_REG_M, buff,
-                                  LSM303AGR_COMP_NUMBER_OF_AXES * 2);
+  msg = lsm303agrReadRegister(devp->config, LSM303AGR_SAD_COMP,
+                              LSM303AGR_AD_OUTX_L_REG_M, buff,
+                              LSM303AGR_COMP_NUMBER_OF_AXES * 2);
 
 #if LSM303AGR_SHARED_I2C
   i2cReleaseBus(devp->config->i2cp);
@@ -799,7 +799,7 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
 #endif /* LSM303AGR_SHARED_I2C */
   i2cStart((devp)->config->i2cp, (devp)->config->i2ccfg);
 
-  lsm303agrI2CWriteRegister(devp->config->i2cp, LSM303AGR_SAD_ACC, cr, 4);
+  lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_ACC, cr, 4);
   
   /* Configuring Compass subsystem */
   /* Multiple write starting address.*/
@@ -823,8 +823,8 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
     cr[3] = 0;
   }
 
-  lsm303agrI2CWriteRegister(devp->config->i2cp, LSM303AGR_SAD_COMP,
-                            cr, 3);
+  lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_COMP,
+                         cr, 3);
 
 #if LSM303AGR_SHARED_I2C
   i2cReleaseBus((devp)->config->i2cp);
@@ -870,14 +870,14 @@ void lsm303agrStop(LSM303AGRDriver *devp) {
     /* Disabling accelerometer. */
     cr[0] = LSM303AGR_AD_CTRL_REG1_A;
     cr[1] = LSM303AGR_ACC_AE_DISABLED | LSM303AGR_ACC_ODR_PD;
-    lsm303agrI2CWriteRegister(devp->config->i2cp, LSM303AGR_SAD_ACC,
-                               cr, 1);
+    lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_ACC,
+                           cr, 1);
 
     /* Disabling compass. */
     cr[0] = LSM303AGR_AD_CFG_REG_A_M;
     cr[1] = LSM303AGR_COMP_MODE_IDLE;
-    lsm303agrI2CWriteRegister(devp->config->i2cp, LSM303AGR_SAD_COMP,
-                               cr, 1);
+    lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_COMP,
+                           cr, 1);
 
     i2cStop((devp)->config->i2cp);
 #if	LSM303AGR_SHARED_I2C
