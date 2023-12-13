@@ -136,14 +136,14 @@ static msg_t acc_read_raw(void *ip, int32_t axes[]) {
 
   osalDbgAssert((devp->state == LSM303AGR_READY),
                 "acc_read_raw(), invalid state");
-  osalDbgAssert((devp->config->i2cp->state == I2C_READY),
-                "acc_read_raw(), channel not ready");
 
 #if LSM303AGR_SHARED_I2C
   i2cAcquireBus(devp->config->i2cp);
   i2cStart(devp->config->i2cp,
            devp->config->i2ccfg);
 #endif /* LSM303AGR_SHARED_I2C */
+  osalDbgAssert((devp->config->i2cp->state == I2C_READY),
+                "acc_read_raw(), channel not ready");
 
   msg = lsm303agrI2CReadRegister(devp->config->i2cp, LSM303AGR_SAD_ACC,
                                   LSM303AGR_AD_OUT_X_L_A, buff,
@@ -362,8 +362,6 @@ static msg_t acc_set_full_scale(LSM303AGRDriver *devp,
 
   osalDbgAssert((devp->state == LSM303AGR_READY),
                 "acc_set_full_scale(), invalid state");
-  osalDbgAssert((devp->config->i2cp->state == I2C_READY),
-                "acc_set_full_scale(), channel not ready");
 
   /* Computing new fullscale value.*/
   if(fs == LSM303AGR_ACC_FS_2G) {
@@ -393,6 +391,8 @@ static msg_t acc_set_full_scale(LSM303AGRDriver *devp,
 		i2cStart(devp->config->i2cp,
 						 devp->config->i2ccfg);
 #endif /* LSM303AGR_SHARED_I2C */
+    osalDbgAssert((devp->config->i2cp->state == I2C_READY),
+                  "acc_set_full_scale(), channel not ready");
 
     /* Updating register.*/
     msg = lsm303agrI2CReadRegister(devp->config->i2cp,
@@ -477,14 +477,15 @@ static msg_t comp_read_raw(void *ip, int32_t axes[]) {
 
   osalDbgAssert((devp->state == LSM303AGR_READY),
                 "comp_read_raw(), invalid state");
-  osalDbgAssert((devp->config->i2cp->state == I2C_READY),
-                "comp_read_raw(), channel not ready");
 
 #if LSM303AGR_SHARED_I2C
   i2cAcquireBus(devp->config->i2cp);
   i2cStart(devp->config->i2cp,
            devp->config->i2ccfg);
 #endif /* LSM303AGR_SHARED_I2C */
+  osalDbgAssert((devp->config->i2cp->state == I2C_READY),
+                "comp_read_raw(), channel not ready");
+
   msg = lsm303agrI2CReadRegister(devp->config->i2cp, LSM303AGR_SAD_COMP,
                                   LSM303AGR_AD_OUTX_L_REG_M, buff,
                                   LSM303AGR_COMP_NUMBER_OF_AXES * 2);
