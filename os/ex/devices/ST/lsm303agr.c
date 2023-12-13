@@ -54,6 +54,51 @@ typedef enum {
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
+#if (LSM303AGR_USE_I2C == TRUE)
+static void lsm303agrStartBus(const LSM303AGRConfig *config) {
+  i2cStart(config->i2cp,
+           config->i2ccfg);
+  osalDbgAssert((config->i2cp->state == I2C_READY),
+                "lsm303agr, channel not ready");
+}
+
+static void lsm303agrStopBus(const LSM303AGRConfig *config) {
+  i2cStop(config->i2cp);
+}
+
+#if (LSM303AGR_SHARED_I2C == TRUE)
+static void lsm303agrAccureBus(const LSM303AGRConfig *config) {
+  i2cAcquireBus(config->i2cp);
+}
+
+static void lsm303agrReleaseBus(const LSM303AGRConfig *config) {
+  i2cReleaseBus(config->i2cp);
+}
+#endif
+#endif
+
+#if (LSM303AGR_USE_SPI == TRUE)
+static void lsm303agrStartBus(const LSM303AGRConfig *config) {
+  spiStart(config->spip,
+           config->spicfg);
+  osalDbgAssert((config->spip->state == SPI_READY),
+                "lsm303agr, channel not ready");
+}
+
+static void lsm303agrStopBus(const LSM303AGRConfig *config) {
+  spiStop(config->spip);
+}
+#if (LSM303AGR_SHARED_SPI == TRUE)
+static void lsm303agrAccureBus(const LSM303AGRConfig *config) {
+  spiAcquireBus(config->spip);
+}
+
+static void lsm303agrReleaseBus(const LSM303AGRConfig *config) {
+  spiReleaseBus(config->spip);
+}
+#endif
+#endif
+
 /**
  * @brief   Reads registers value using I2C.
  * @pre     The I2C interface must be initialized and the driver started.
@@ -68,10 +113,25 @@ typedef enum {
  */
 static msg_t lsm303agrReadRegister(const LSM303AGRConfig *config, lsm303agr_sad_t sad,
                                    uint8_t reg, uint8_t *rxbuf, size_t n) {
-
+#if (LSM303AGR_USE_I2C == TRUE)
   uint8_t txbuf = reg | LSM303AGR_MS;
   return i2cMasterTransmitTimeout(config->i2cp, sad, &txbuf, 1, rxbuf, n,
                                   TIME_INFINITE);
+#endif
+#if (LSM303AGR_USE_SPI == TRUE)
+  uint8_t cmd = (reg & LSM303AGR_SPI_AD_MASK) | LSM303AGR_SPI_MS | LSM303AGR_SPI_RD;
+
+  /* SPI mode supports only Accel */
+  if (sad != LSM303AGR_SAD_ACC)
+    return MSG_OK;
+
+  spiSelect(config->spip);
+  spiSend(config->spip, 1, &cmd);
+  spiReceive(config->spip, n, rxbuf);
+  spiUnselect(config->spip);
+
+  return MSG_OK;
+#endif
 }
 
 /**
@@ -87,11 +147,36 @@ static msg_t lsm303agrReadRegister(const LSM303AGRConfig *config, lsm303agr_sad_
  * @return              the operation status.
  */
 static msg_t lsm303agrWriteRegister(const LSM303AGRConfig *config, lsm303agr_sad_t sad,
-                                    uint8_t *txbuf, size_t n) {
+                                    uint8_t reg, uint8_t *txdata, size_t n) {
+#if (LSM303AGR_USE_I2C == TRUE)
+  int i;
+  uint8_t txbuf[1 + 8];
+
+  if (n > 8)
+    return MSG_RESET;
+
+  txbuf[0] = reg;
   if (n != 1)
-    *txbuf |= LSM303AGR_MS;
+    txbuf[0] |= LSM303AGR_MS;
+  for (i = 0; i < n; i++)
+    txbuf[i + 1] = txdata[i];
   return i2cMasterTransmitTimeout(config->i2cp, sad, txbuf, n + 1, NULL, 0,
                                   TIME_INFINITE);
+#endif
+#if (LSM303AGR_USE_SPI == TRUE)
+  uint8_t cmd = (reg & LSM303AGR_SPI_AD_MASK) | LSM303AGR_SPI_MS;
+
+  /* SPI mode supports only Accel */
+  if (sad != LSM303AGR_SAD_ACC)
+    return MSG_OK;
+
+  spiSelect(config->spip);
+  spiSend(config->spip, 1, &cmd);
+  spiSend(config->spip, n, txdata);
+  spiUnselect(config->spip);
+
+  return MSG_OK;
+#endif
 }
 
 /**
@@ -137,21 +222,18 @@ static msg_t acc_read_raw(void *ip, int32_t axes[]) {
   osalDbgAssert((devp->state == LSM303AGR_READY),
                 "acc_read_raw(), invalid state");
 
-#if LSM303AGR_SHARED_I2C
-  i2cAcquireBus(devp->config->i2cp);
-  i2cStart(devp->config->i2cp,
-           devp->config->i2ccfg);
-#endif /* LSM303AGR_SHARED_I2C */
-  osalDbgAssert((devp->config->i2cp->state == I2C_READY),
-                "acc_read_raw(), channel not ready");
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+  lsm303agrAccureBus(devp->config);
+  lsm303agrStartBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
 
   msg = lsm303agrReadRegister(devp->config, LSM303AGR_SAD_ACC,
                               LSM303AGR_AD_OUT_X_L_A, buff,
                               LSM303AGR_ACC_NUMBER_OF_AXES * 2);
 
-#if LSM303AGR_SHARED_I2C
-  i2cReleaseBus(devp->config->i2cp);
-#endif /* LSM303AGR_SHARED_I2C */
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+  lsm303agrReleaseBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
 
   if(msg == MSG_OK)
     for(i = 0; i < LSM303AGR_ACC_NUMBER_OF_AXES; i++) {
@@ -355,7 +437,7 @@ static msg_t acc_reset_sensivity(void *ip) {
 static msg_t acc_set_full_scale(LSM303AGRDriver *devp,
                                 lsm303agr_acc_fs_t fs) {
   float newfs, scale;
-  uint8_t i, buff[2];
+  uint8_t i, buff[1];
   msg_t msg;
 
   osalDbgCheck(devp != NULL);
@@ -386,13 +468,10 @@ static msg_t acc_set_full_scale(LSM303AGRDriver *devp,
     scale = newfs / devp->accfullscale;
     devp->accfullscale = newfs;
 
-#if LSM303AGR_SHARED_I2C
-		i2cAcquireBus(devp->config->i2cp);
-		i2cStart(devp->config->i2cp,
-						 devp->config->i2ccfg);
-#endif /* LSM303AGR_SHARED_I2C */
-    osalDbgAssert((devp->config->i2cp->state == I2C_READY),
-                  "acc_set_full_scale(), channel not ready");
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+    lsm303agrAccureBus(devp->config);
+    lsm303agrStartBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
 
     /* Updating register.*/
     msg = lsm303agrReadRegister(devp->config,
@@ -403,16 +482,15 @@ static msg_t acc_set_full_scale(LSM303AGRDriver *devp,
     if(msg != MSG_OK)
       return msg;
 
-    buff[1] &= ~(LSM303AGR_CTRL_REG4_A_FS_MASK);
-    buff[1] |= fs;
-    buff[0] = LSM303AGR_AD_CTRL_REG4_A;
+    buff[0] &= ~(LSM303AGR_CTRL_REG4_A_FS_MASK);
+    buff[0] |= fs;
 
-    msg = lsm303agrWriteRegister(devp->config,
-                                 LSM303AGR_SAD_ACC, buff, 1);
+    msg = lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_ACC,
+                                 LSM303AGR_AD_CTRL_REG4_A, buff, 1);
 
-#if LSM303AGR_SHARED_I2C
-		i2cReleaseBus(devp->config->i2cp);
-#endif /* LSM303AGR_SHARED_I2C */
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+    lsm303agrReleaseBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
 
     if(msg != MSG_OK)
       return msg;
@@ -469,21 +547,18 @@ static msg_t comp_read_raw(void *ip, int32_t axes[]) {
   osalDbgAssert((devp->state == LSM303AGR_READY),
                 "comp_read_raw(), invalid state");
 
-#if LSM303AGR_SHARED_I2C
-  i2cAcquireBus(devp->config->i2cp);
-  i2cStart(devp->config->i2cp,
-           devp->config->i2ccfg);
-#endif /* LSM303AGR_SHARED_I2C */
-  osalDbgAssert((devp->config->i2cp->state == I2C_READY),
-                "comp_read_raw(), channel not ready");
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+  lsm303agrAccureBus(devp->config);
+  lsm303agrStartBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
 
   msg = lsm303agrReadRegister(devp->config, LSM303AGR_SAD_COMP,
                               LSM303AGR_AD_OUTX_L_REG_M, buff,
                               LSM303AGR_COMP_NUMBER_OF_AXES * 2);
 
-#if LSM303AGR_SHARED_I2C
-  i2cReleaseBus(devp->config->i2cp);
-#endif /* LSM303AGR_SHARED_I2C */
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+  lsm303agrReleaseBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
 
   if(msg == MSG_OK)
     for(i = 0; i < LSM303AGR_COMP_NUMBER_OF_AXES; i++) {
@@ -702,7 +777,7 @@ void lsm303agrObjectInit(LSM303AGRDriver *devp) {
  */
 void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
   uint32_t i;
-  uint8_t cr[6];
+  uint8_t cr[4];
   osalDbgCheck((devp != NULL) && (config != NULL));
 
   osalDbgAssert((devp->state == LSM303AGR_STOP) ||
@@ -713,36 +788,33 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
 
   /* Configuring Accelerometer subsystem.*/
 
-  /* Multiple write starting address.*/
-  cr[0] = LSM303AGR_AD_CTRL_REG1_A;
-
   /* Control register 1 configuration block.*/
   {
-    cr[1] = LSM303AGR_ACC_AE_XYZ | devp->config->accoutdatarate;
+    cr[0] = LSM303AGR_ACC_AE_XYZ | devp->config->accoutdatarate;
 #if LSM303AGR_USE_ADVANCED || defined(__DOXYGEN__)
     if(devp->config->accmode == LSM303AGR_ACC_MODE_LPOW)
-      cr[1] |= LSM303AGR_CTRL_REG1_A_LPEN;
+      cr[0] |= LSM303AGR_CTRL_REG1_A_LPEN;
 #endif
   }
 
   /* Control register 2 configuration block.*/
   {
-    cr[2] = 0;
+    cr[1] = 0;
   }
 
   /* Control register 3 configuration block.*/
   {
-    cr[3] = 0;
+    cr[2] = 0;
   }
 
   /* Control register 4 configuration block.*/
   {
-    cr[4] = devp->config->accfullscale;
+    cr[3] = devp->config->accfullscale;
 #if LSM303AGR_USE_ADVANCED || defined(__DOXYGEN__)
-    cr[4] |= devp->config->accendianess |
+    cr[3] |= devp->config->accendianess |
              devp->config->accblockdataupdate;
     if(devp->config->accmode == LSM303AGR_ACC_MODE_HRES)
-      cr[4] |= LSM303AGR_CTRL_REG4_A_HR;
+      cr[3] |= LSM303AGR_CTRL_REG4_A_HR;
 #endif
   }
 
@@ -794,41 +866,40 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
     for(i = 0; i < LSM303AGR_ACC_NUMBER_OF_AXES; i++)
       devp->accbias[i] = LSM303AGR_ACC_BIAS;
 
-#if LSM303AGR_SHARED_I2C
-  i2cAcquireBus((devp)->config->i2cp);
-#endif /* LSM303AGR_SHARED_I2C */
-  i2cStart((devp)->config->i2cp, (devp)->config->i2ccfg);
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+  lsm303agrAccureBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
+  lsm303agrStartBus(devp->config);
 
-  lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_ACC, cr, 4);
+  lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_ACC,
+                         LSM303AGR_AD_CTRL_REG1_A, cr, 4);
   
   /* Configuring Compass subsystem */
-  /* Multiple write starting address.*/
-  cr[0] = LSM303AGR_AD_CFG_REG_A_M;
 
   /* Control register A configuration block.*/
   {
-    cr[1] = devp->config->compoutputdatarate;
+    cr[0] = devp->config->compoutputdatarate;
 #if LSM303AGR_USE_ADVANCED || defined(__DOXYGEN__)
-    cr[1] |= devp->config->compmode | devp->config->complp;
+    cr[0] |= devp->config->compmode | devp->config->complp;
 #endif
   }
 
   /* Control register B configuration block.*/
   {
-    cr[2] = 0;
+    cr[1] = 0;
   }
 
   /* Control register C configuration block.*/
   {
-    cr[3] = 0;
+    cr[2] = 0;
   }
 
   lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_COMP,
-                         cr, 3);
+                         LSM303AGR_AD_CFG_REG_A_M, cr, 3);
 
-#if LSM303AGR_SHARED_I2C
-  i2cReleaseBus((devp)->config->i2cp);
-#endif /* LSM303AGR_SHARED_I2C */
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+  lsm303agrReleaseBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
 
   devp->compfullscale = LSM303AGR_COMP_50GA;
   for(i = 0; i < LSM303AGR_COMP_NUMBER_OF_AXES; i++) {
@@ -854,7 +925,7 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
  * @api
  */
 void lsm303agrStop(LSM303AGRDriver *devp) {
-  uint8_t cr[2];
+  uint8_t cr[1];
   osalDbgCheck(devp != NULL);
 
   osalDbgAssert((devp->state == LSM303AGR_STOP) ||
@@ -862,27 +933,25 @@ void lsm303agrStop(LSM303AGRDriver *devp) {
                 "lsm303agrStop(), invalid state");
 
   if (devp->state == LSM303AGR_READY) {
-#if	LSM303AGR_SHARED_I2C
-    i2cAcquireBus((devp)->config->i2cp);
-    i2cStart((devp)->config->i2cp, (devp)->config->i2ccfg);
-#endif /* LSM303AGR_SHARED_I2C */
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+    lsm303agrAccureBus(devp->config);
+    lsm303agrStartBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
 
     /* Disabling accelerometer. */
-    cr[0] = LSM303AGR_AD_CTRL_REG1_A;
-    cr[1] = LSM303AGR_ACC_AE_DISABLED | LSM303AGR_ACC_ODR_PD;
+    cr[0] = LSM303AGR_ACC_AE_DISABLED | LSM303AGR_ACC_ODR_PD;
     lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_ACC,
-                           cr, 1);
+                           LSM303AGR_AD_CTRL_REG1_A, cr, 1);
 
     /* Disabling compass. */
-    cr[0] = LSM303AGR_AD_CFG_REG_A_M;
-    cr[1] = LSM303AGR_COMP_MODE_IDLE;
+    cr[0] = LSM303AGR_COMP_MODE_IDLE;
     lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_COMP,
-                           cr, 1);
+                           LSM303AGR_AD_CFG_REG_A_M, cr, 1);
 
-    i2cStop((devp)->config->i2cp);
-#if	LSM303AGR_SHARED_I2C
-    i2cReleaseBus((devp)->config->i2cp);
-#endif /* LSM303AGR_SHARED_I2C */
+    lsm303agrStopBus((devp)->config);
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+    lsm303agrReleaseBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
   }			
   devp->state = LSM303AGR_STOP;
 }

@@ -109,6 +109,10 @@
 #define LSM303AGR_AD_MASK                   0x7F
 #define LSM303AGR_AD(n)                     (1 << n)
 #define LSM303AGR_MS                        (1 << 7)
+
+#define LSM303AGR_SPI_AD_MASK               (0x3f)
+#define LSM303AGR_SPI_RD                    (1 << 7)
+#define LSM303AGR_SPI_MS                    (1 << 6)
 /** @} */
 
 /**
@@ -381,13 +385,6 @@
 #error "LSM303AGR_SHARED_I2C requires I2C_USE_MUTUAL_EXCLUSION"
 #endif
 
-/*
- * CHTODO: Add support for LSM303AGR over SPI.
- */
-#if LSM303AGR_USE_SPI
-#error "LSM303AGR over SPI still not supported"
-#endif
-
 /*===========================================================================*/
 /* Driver data structures and types.                                         */
 /*===========================================================================*/
@@ -516,6 +513,17 @@ typedef enum {
  * @brief LSM303AGR configuration structure.
  */
 typedef struct {
+#if (LSM303AGR_USE_SPI) || defined(__DOXYGEN__)
+  /**
+   * @brief SPI driver associated to this LSM303AGR.
+   */
+  SPIDriver                 *spip;
+  /**
+   * @brief SPI configuration associated to this LSM303AGR.
+   */
+  const SPIConfig           *spicfg;
+#endif /* LIS2DW12_USE_SPI */
+#if (LSM303AGR_USE_I2C) || defined(__DOXYGEN__)
   /**
    * @brief I2C driver associated to this LSM303AGR.
    */
@@ -524,6 +532,7 @@ typedef struct {
    * @brief I2C configuration associated to this LSM303AGR.
    */
   const I2CConfig           *i2ccfg;
+#endif /* LSM303AGR_USE_I2C */
   /**
    * @brief LSM303AGR accelerometer subsystem initial sensitivity.
    */
