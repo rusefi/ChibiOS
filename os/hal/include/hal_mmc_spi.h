@@ -55,6 +55,13 @@
 #if !defined(MMC_NICE_WAITING) || defined(__DOXYGEN__)
 #define MMC_NICE_WAITING            TRUE
 #endif
+
+/**
+ * @brief   Mutual exclusion on the SPI bus.
+ */
+#if !defined(MMC_USE_MUTUAL_EXCLUSION) || defined(__DOXYGEN__)
+#define MMC_USE_MUTUAL_EXCLUSION        TRUE
+#endif
 /** @} */
 
 /*===========================================================================*/
@@ -63,6 +70,10 @@
 
 #if (HAL_USE_SPI == FALSE) || (SPI_USE_WAIT == FALSE)
 #error "MMC_SPI driver requires HAL_USE_SPI and SPI_USE_WAIT"
+#endif
+
+#if (MMC_USE_MUTUAL_EXCLUSION == TRUE) && (SPI_USE_MUTUAL_EXCLUSION == FALSE)
+#error "MMC_USE_MUTUAL_EXCLUSION requires SPI_USE_MUTUAL_EXCLUSION"
 #endif
 
 /*===========================================================================*/

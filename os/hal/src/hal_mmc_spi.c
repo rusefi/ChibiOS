@@ -80,24 +80,30 @@ void spiIgnoreSmall(SPIDriver* spip, size_t n) {
 /*===========================================================================*/
 
 /* Forward declarations required by mmc_vmt.*/
+static bool mmc_is_card_inserted(void *instance);
+static bool mmc_is_write_protected(void *instance);
+static bool mmc_connect(void *instance);
+static bool mmc_disconnect(void *instance);
 static bool mmc_read(void *instance, uint32_t startblk,
                        uint8_t *buffer, uint32_t n);
 static bool mmc_write(void *instance, uint32_t startblk,
                         const uint8_t *buffer, uint32_t n);
+static bool mmc_sync(void *instance);
+static bool mmc_get_info(void *instance, BlockDeviceInfo *bdip);
 
 /**
  * @brief   Virtual methods table.
  */
 static const struct MMCDriverVMT mmc_vmt = {
   (size_t)0,
-  (bool (*)(void *))mmc_lld_is_card_inserted,
-  (bool (*)(void *))mmc_lld_is_write_protected,
-  (bool (*)(void *))mmcConnect,
-  (bool (*)(void *))mmcDisconnect,
+  mmc_is_card_inserted,
+  mmc_is_write_protected,
+  mmc_connect,
+  mmc_disconnect,
   mmc_read,
   mmc_write,
-  (bool (*)(void *))mmcSync,
-  (bool (*)(void *, BlockDeviceInfo *))mmcGetInfo
+  mmc_sync,
+  mmc_get_info
 };
 
 /**
@@ -132,46 +138,154 @@ static const uint8_t crc7_lookup_table[256] = {
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
+static bool mmc_is_card_inserted(void *instance) {
+  MMCDriver *mmcp = (MMCDriver *)instance;
+  bool err;
+
+  err = mmcIsCardInserted(mmcp);
+
+  return err;
+}
+
+static bool mmc_is_write_protected(void *instance) {
+  MMCDriver *mmcp = (MMCDriver *)instance;
+  bool err;
+
+  err = mmcIsWriteProtected(mmcp);
+
+  return err;
+}
+
+static bool mmc_connect(void *instance) {
+  MMCDriver *mmcp = (MMCDriver *)instance;
+  bool err;
+
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiAcquireBus(mmcp->config->spip);
+#endif
+
+  err = mmcConnect(mmcp);
+
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiReleaseBus(mmcp->config->spip);
+#endif
+
+  return err;
+}
+
+static bool mmc_disconnect(void *instance) {
+  MMCDriver *mmcp = (MMCDriver *)instance;
+  bool err;
+
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiAcquireBus(mmcp->config->spip);
+#endif
+
+  err = mmcDisconnect(mmcp);
+
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiReleaseBus(mmcp->config->spip);
+#endif
+
+  return err;
+}
+
 static bool mmc_read(void *instance, uint32_t startblk,
                 uint8_t *buffer, uint32_t n) {
+  MMCDriver *mmcp = (MMCDriver *)instance;
+  bool err = HAL_FAILED;
 
-  if (mmcStartSequentialRead((MMCDriver *)instance, startblk)) {
-    return HAL_FAILED;
-  }
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiAcquireBus(mmcp->config->spip);
+#endif
 
-  while (n > 0U) {
-    if (mmcSequentialRead((MMCDriver *)instance, buffer)) {
-      return HAL_FAILED;
+  do {
+    if (mmcStartSequentialRead(mmcp, startblk)) {
+      break;
     }
-    buffer += MMCSD_BLOCK_SIZE;
-    n--;
-  }
 
-  if (mmcStopSequentialRead((MMCDriver *)instance)) {
-    return HAL_FAILED;
-  }
-  return HAL_SUCCESS;
+    while (n > 0U) {
+      if (mmcSequentialRead(mmcp, buffer)) {
+        break;
+      }
+      buffer += MMCSD_BLOCK_SIZE;
+      n--;
+    }
+
+    if (mmcStopSequentialRead(mmcp)) {
+      break;
+    }
+
+    err = HAL_SUCCESS;
+  } while (false);
+
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiReleaseBus(mmcp->config->spip);
+#endif
+
+  return err;
 }
 
 static bool mmc_write(void *instance, uint32_t startblk,
                  const uint8_t *buffer, uint32_t n) {
+  MMCDriver *mmcp = (MMCDriver *)instance;
+  bool err = HAL_FAILED;
 
-  if (mmcStartSequentialWrite((MMCDriver *)instance, startblk)) {
-    return HAL_FAILED;
-  }
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiAcquireBus(mmcp->config->spip);
+#endif
 
-  while (n > 0U) {
-    if (mmcSequentialWrite((MMCDriver *)instance, buffer)) {
-      return HAL_FAILED;
+  do {
+    if (mmcStartSequentialWrite(mmcp, startblk)) {
+      break;
     }
-    buffer += MMCSD_BLOCK_SIZE;
-    n--;
-  }
 
-  if (mmcStopSequentialWrite((MMCDriver *)instance)) {
-    return HAL_FAILED;
-  }
-  return HAL_SUCCESS;
+    while (n > 0U) {
+      if (mmcSequentialWrite(mmcp, buffer)) {
+        break;
+      }
+      buffer += MMCSD_BLOCK_SIZE;
+      n--;
+    }
+
+    if (mmcStopSequentialWrite(mmcp)) {
+      break;
+    }
+
+    err = HAL_SUCCESS;
+  } while (false);
+
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiReleaseBus(mmcp->config->spip);
+#endif
+
+  return err;
+}
+
+static bool mmc_sync(void *instance) {
+  MMCDriver *mmcp = (MMCDriver *)instance;
+  bool err;
+
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiAcquireBus(mmcp->config->spip);
+#endif
+
+  err = mmcSync(mmcp);
+
+#if MMC_USE_MUTUAL_EXCLUSION == TRUE
+  spiReleaseBus(mmcp->config->spip);
+#endif
+
+  return err;
+}
+
+static bool mmc_get_info(void *instance, BlockDeviceInfo *bdip) {
+  MMCDriver *mmcp = (MMCDriver *)instance;
+  bool err;
+
+  err = mmcGetInfo(mmcp, bdip);
+
+  return err;
 }
 
 /**
