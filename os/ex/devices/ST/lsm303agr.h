@@ -919,7 +919,7 @@ struct LSM303AGRDriver {
 extern "C" {
 #endif
   void lsm303agrObjectInit(LSM303AGRDriver *devp);
-  void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config);
+  msg_t lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config);
   void lsm303agrStop(LSM303AGRDriver *devp);
 #ifdef __cplusplus
 }

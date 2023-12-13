@@ -775,8 +775,9 @@ void lsm303agrObjectInit(LSM303AGRDriver *devp) {
  *
  * @api
  */
-void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
+msg_t lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
   uint32_t i;
+  uint8_t devid;
   uint8_t cr[4];
   osalDbgCheck((devp != NULL) && (config != NULL));
 
@@ -871,6 +872,14 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
 #endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
   lsm303agrStartBus(devp->config);
 
+  /* Check WHO_I_AM */
+  lsm303agrReadRegister(devp->config, LSM303AGR_SAD_ACC,
+                          LSM303AGR_AD_WHO_AM_I_A, &devid, 1);
+  if (devid != 0x33)
+  {
+    return MSG_RESET;
+  }
+
   lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_ACC,
                          LSM303AGR_AD_CTRL_REG1_A, cr, 4);
   
@@ -915,6 +924,8 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
   osalThreadSleepMilliseconds(5);
 
   devp->state = LSM303AGR_READY;
+
+  return MSG_OK;
 }
 
 /**
