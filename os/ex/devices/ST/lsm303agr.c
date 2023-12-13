@@ -400,21 +400,12 @@ static msg_t acc_set_full_scale(LSM303AGRDriver *devp,
                                    LSM303AGR_AD_CTRL_REG4_A,
                                    &buff[1], 1);
 
-#if LSM303AGR_SHARED_I2C
-        i2cReleaseBus(devp->config->i2cp);
-#endif /* LSM303AGR_SHARED_I2C */
-
     if(msg != MSG_OK)
       return msg;
 
     buff[1] &= ~(LSM303AGR_CTRL_REG4_A_FS_MASK);
     buff[1] |= fs;
     buff[0] = LSM303AGR_AD_CTRL_REG4_A;
-
-#if LSM303AGR_SHARED_I2C
-    i2cAcquireBus(devp->config->i2cp);
-    i2cStart(devp->config->i2cp, devp->config->i2ccfg);
-#endif /* LSM303AGR_SHARED_I2C */
 
     msg = lsm303agrI2CWriteRegister(devp->config->i2cp,
                                     LSM303AGR_SAD_ACC, buff, 1);
@@ -809,10 +800,6 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
   i2cStart((devp)->config->i2cp, (devp)->config->i2ccfg);
 
   lsm303agrI2CWriteRegister(devp->config->i2cp, LSM303AGR_SAD_ACC, cr, 4);
-
-#if LSM303AGR_SHARED_I2C
-  i2cReleaseBus((devp)->config->i2cp);
-#endif /* LSM303AGR_SHARED_I2C */
   
   /* Configuring Compass subsystem */
   /* Multiple write starting address.*/
@@ -835,11 +822,6 @@ void lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
   {
     cr[3] = 0;
   }
-
-#if LSM303AGR_SHARED_I2C
-  i2cAcquireBus((devp)->config->i2cp);
-  i2cStart((devp)->config->i2cp, (devp)->config->i2ccfg);
-#endif /* LSM303AGR_SHARED_I2C */
 
   lsm303agrI2CWriteRegister(devp->config->i2cp, LSM303AGR_SAD_COMP,
                             cr, 3);
