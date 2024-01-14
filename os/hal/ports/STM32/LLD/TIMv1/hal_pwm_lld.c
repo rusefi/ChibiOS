@@ -582,8 +582,15 @@ void pwm_lld_init(void) {
  * @notapi
  */
 void pwm_lld_start(PWMDriver *pwmp) {
+  uint32_t cr1 = 0;
   uint32_t psc;
   uint32_t ccer;
+
+#if defined(AT32F435xx) || defined(AT32F437xx)
+  /* always enable 32 bit mode for Artery devices for compatibility with STM32
+   * Actually only TIM2 and TIM5 have this bit and support 32 bit mode */
+  cr1 = AT32_TIM_CR1_PMEN;
+#endif
 
   if (pwmp->state == PWM_STOP) {
     /* Clock activation and timer reset.*/
@@ -823,6 +830,8 @@ void pwm_lld_start(PWMDriver *pwmp) {
     }
 #endif
 
+    /* Set 32-bit mode in case of Artery */
+    pwmp->tim->CR1    = cr1;
     /* All channels configured in PWM1 mode with preload enabled and will
        stay that way until the driver is stopped.*/
     pwmp->tim->CCMR1 = STM32_TIM_CCMR1_OC1M(6) | STM32_TIM_CCMR1_OC1PE |
@@ -836,7 +845,7 @@ void pwm_lld_start(PWMDriver *pwmp) {
   }
   else {
     /* Driver re-configuration scenario, it must be stopped first.*/
-    pwmp->tim->CR1    = 0;                  /* Timer disabled.              */
+    pwmp->tim->CR1    = cr1;                /* Timer disabled.              */
     pwmp->tim->CCR[0] = 0;                  /* Comparator 1 disabled.       */
     pwmp->tim->CCR[1] = 0;                  /* Comparator 2 disabled.       */
     pwmp->tim->CCR[2] = 0;                  /* Comparator 3 disabled.       */
@@ -979,8 +988,10 @@ void pwm_lld_start(PWMDriver *pwmp) {
 #endif
 #endif
   /* Timer configured and started.*/
-  pwmp->tim->CR1   = STM32_TIM_CR1_ARPE | STM32_TIM_CR1_URS |
-                     STM32_TIM_CR1_CEN;
+
+  cr1 |= STM32_TIM_CR1_ARPE | STM32_TIM_CR1_URS |
+         STM32_TIM_CR1_CEN;
+  pwmp->tim->CR1 = cr1;
 }
 
 /**
