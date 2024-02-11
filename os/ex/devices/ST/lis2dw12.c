@@ -480,7 +480,7 @@ msg_t lis2dw12Start(LIS2DW12Driver *devp, const LIS2DW12Config *config) {
 
   /* Control register 6 configuration block.*/
   {
-    cr[6] = devp->config->accbadwidthselect |
+    cr[5] = devp->config->accbadwidthselect |
             devp->config->accfullscale |
             LIS2DW12_CTRL_REG6_FDS_LPF |
             LIS2DW12_CTRL_REG6_LOW_NOISE;
