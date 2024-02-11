@@ -696,7 +696,7 @@ struct LIS3DSHDriver {
 extern "C" {
 #endif
   void lis3dshObjectInit(LIS3DSHDriver *devp);
-  void lis3dshStart(LIS3DSHDriver *devp, const LIS3DSHConfig *config);
+  msg_t lis3dshStart(LIS3DSHDriver *devp, const LIS3DSHConfig *config);
   void lis3dshStop(LIS3DSHDriver *devp);
 #ifdef __cplusplus
 }
