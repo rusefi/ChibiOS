@@ -469,9 +469,10 @@ void lis3dshObjectInit(LIS3DSHDriver *devp) {
  *
  * @api
  */
-void lis3dshStart(LIS3DSHDriver *devp, const LIS3DSHConfig *config) {
+msg_t lis3dshStart(LIS3DSHDriver *devp, const LIS3DSHConfig *config) {
   uint32_t i;
   uint8_t cr;
+  uint8_t devid;
   osalDbgCheck((devp != NULL) && (config != NULL));
 
   osalDbgAssert((devp->state == LIS3DSH_STOP) ||
@@ -479,6 +480,24 @@ void lis3dshStart(LIS3DSHDriver *devp, const LIS3DSHConfig *config) {
                 "lis3dshStart(), invalid state");		
 
   devp->config = config;
+
+#if LIS3DSH_USE_SPI
+#if LIS3DSH_SHARED_SPI
+  spiAcquireBus(devp->config->spip);
+#endif /* LIS3DSH_SHARED_SPI */
+  spiStart(devp->config->spip, devp->config->spicfg);
+
+
+  /* Check WHO_I_AM */
+  lis3dshSPIReadRegister(devp->config->spip, LIS3DSH_AD_WHO_AM_I,
+                         1, &devid);
+  if (devid != 0x3f)
+  {
+#if LIS3DSH_SHARED_SPI
+    spiReleaseBus(devp->config->spip);
+#endif /* LIS3DSH_SHARED_SPI */
+    return MSG_RESET;
+  }
 
   /* Control register 4 configuration block.*/
   {
@@ -488,12 +507,6 @@ void lis3dshStart(LIS3DSHDriver *devp, const LIS3DSHConfig *config) {
     cr |= devp->config->accbdu;
 #endif
   }
-
-#if LIS3DSH_USE_SPI
-#if LIS3DSH_SHARED_SPI
-  spiAcquireBus(devp->config->spip);
-#endif /* LIS3DSH_SHARED_SPI */
-  spiStart(devp->config->spip, devp->config->spicfg);
 
   lis3dshSPIWriteRegister(devp->config->spip, LIS3DSH_AD_CTRL_REG4, 1, &cr);
 
@@ -606,6 +619,8 @@ void lis3dshStart(LIS3DSHDriver *devp, const LIS3DSHConfig *config) {
   osalThreadSleepMilliseconds(10);
 
   devp->state = LIS3DSH_READY;
+
+  return MSG_OK;
 }
 
 /**
