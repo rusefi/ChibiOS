@@ -459,6 +459,23 @@ msg_t lis2dw12Start(LIS2DW12Driver *devp, const LIS2DW12Config *config) {
 
   devp->config = config;
 
+#if LIS2DW12_USE_SPI
+#if LIS2DW12_SHARED_SPI
+  spiAcquireBus((devp)->config->spip);
+#endif /* LIS2DW12_SHARED_SPI */
+  spiStart((devp)->config->spip, (devp)->config->spicfg);
+
+  /* Check WHO_I_AM */
+  lis2dw12SPIReadRegister(devp->config->spip, LIS2DW12_AD_WHO_AM_I,
+                          1, &devid);
+  if (devid != 0x44)
+  {
+#if LIS2DW12_SHARED_SPI
+    spiReleaseBus((devp)->config->spip);
+#endif /* LIS2DW12_SHARED_SPI */
+    return MSG_RESET;
+  }
+
   /* Control register 1 configuration block.*/
   {
     cr[0] = devp->config->accoutputdatarate |
@@ -480,23 +497,10 @@ msg_t lis2dw12Start(LIS2DW12Driver *devp, const LIS2DW12Config *config) {
 
   /* Control register 6 configuration block.*/
   {
-    cr[6] = devp->config->accbadwidthselect |
+    cr[5] = devp->config->accbadwidthselect |
             devp->config->accfullscale |
             LIS2DW12_CTRL_REG6_FDS_LPF |
             LIS2DW12_CTRL_REG6_LOW_NOISE;
-  }
-#if LIS2DW12_USE_SPI
-#if LIS2DW12_SHARED_SPI
-  spiAcquireBus((devp)->config->spip);
-#endif /* LIS2DW12_SHARED_SPI */
-  spiStart((devp)->config->spip, (devp)->config->spicfg);
-
-  /* Check WHO_I_AM */
-  lis2dw12SPIReadRegister(devp->config->spip, LIS2DW12_AD_WHO_AM_I,
-                          1, &devid);
-  if (devid != 0x44)
-  {
-    return MSG_RESET;
   }
 
   /* First enable autoincrement */
