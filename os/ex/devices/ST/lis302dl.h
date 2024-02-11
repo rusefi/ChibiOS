@@ -554,7 +554,7 @@ struct LIS302DLDriver {
 extern "C" {
 #endif
   void lis302dlObjectInit(LIS302DLDriver *devp);
-  void lis302dlStart(LIS302DLDriver *devp, const LIS302DLConfig *config);
+  msg_t lis302dlStart(LIS302DLDriver *devp, const LIS302DLConfig *config);
   void lis302dlStop(LIS302DLDriver *devp);
 #ifdef __cplusplus
 }

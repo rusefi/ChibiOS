@@ -441,8 +441,9 @@ void lis302dlObjectInit(LIS302DLDriver *devp) {
  *
  * @api
  */
-void lis302dlStart(LIS302DLDriver *devp, const LIS302DLConfig *config) {
+msg_t lis302dlStart(LIS302DLDriver *devp, const LIS302DLConfig *config) {
   uint32_t i;
+  uint8_t devid;
   uint8_t cr[2] = {0, 0};
   osalDbgCheck((devp != NULL) && (config != NULL));
 
@@ -450,6 +451,23 @@ void lis302dlStart(LIS302DLDriver *devp, const LIS302DLConfig *config) {
               "lis302dlStart(), invalid state");
 
   devp->config = config;
+
+#if LIS302DL_USE_SPI
+#if LIS302DL_SHARED_SPI
+  spiAcquireBus((devp)->config->spip);
+#endif /* LIS302DL_SHARED_SPI */
+  spiStart((devp)->config->spip, (devp)->config->spicfg);
+
+  /* Check WHO_I_AM */
+  lis302dlSPIReadRegister(devp->config->spip, LIS302DL_AD_WHO_AM_I,
+                          1, &devid);
+  if (devid != 0x3b)
+  {
+#if LIS302DL_SHARED_SPI
+    spiReleaseBus((devp)->config->spip);
+#endif /* LIS302DL_SHARED_SPI */
+    return MSG_RESET;
+  }
 
   /* Control register 1 configuration block.*/
   {
@@ -466,12 +484,6 @@ void lis302dlStart(LIS302DLDriver *devp, const LIS302DLConfig *config) {
     cr[1] = devp->config->acchighpass;
 #endif
   }
-
-#if LIS302DL_USE_SPI
-#if LIS302DL_SHARED_SPI
-  spiAcquireBus((devp)->config->spip);
-#endif /* LIS302DL_SHARED_SPI */
-  spiStart((devp)->config->spip, (devp)->config->spicfg);
 
   lis302dlSPIWriteRegister(devp->config->spip, LIS302DL_AD_CTRL_REG1,
                            2, cr);
@@ -516,6 +528,8 @@ void lis302dlStart(LIS302DLDriver *devp, const LIS302DLConfig *config) {
   osalThreadSleepMilliseconds(10);
 
   devp->state = LIS302DL_READY;
+
+  return MSG_OK;
 }
 
 /**
