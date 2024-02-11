@@ -789,6 +789,22 @@ msg_t lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
 
   devp->config = config;
 
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+  lsm303agrAccureBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
+  lsm303agrStartBus(devp->config);
+
+  /* Check WHO_I_AM */
+  lsm303agrReadRegister(devp->config, LSM303AGR_SAD_ACC,
+                          LSM303AGR_AD_WHO_AM_I_A, &devid, 1);
+  if (devid != 0x33)
+  {
+#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
+    lsm303agrReleaseBus(devp->config);
+#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
+    return MSG_RESET;
+  }
+
   /* Configuring Accelerometer subsystem.*/
 
   /* Control register 1 configuration block.*/
@@ -868,19 +884,6 @@ msg_t lsm303agrStart(LSM303AGRDriver *devp, const LSM303AGRConfig *config) {
   else
     for(i = 0; i < LSM303AGR_ACC_NUMBER_OF_AXES; i++)
       devp->accbias[i] = LSM303AGR_ACC_BIAS;
-
-#if (LSM303AGR_SHARED_I2C == TRUE) || (LSM303AGR_SHARED_SPI == TRUE)
-  lsm303agrAccureBus(devp->config);
-#endif /* LSM303AGR_SHARED_I2C || LSM303AGR_SHARED_SPI */
-  lsm303agrStartBus(devp->config);
-
-  /* Check WHO_I_AM */
-  lsm303agrReadRegister(devp->config, LSM303AGR_SAD_ACC,
-                          LSM303AGR_AD_WHO_AM_I_A, &devid, 1);
-  if (devid != 0x33)
-  {
-    return MSG_RESET;
-  }
 
   lsm303agrWriteRegister(devp->config, LSM303AGR_SAD_ACC,
                          LSM303AGR_AD_CTRL_REG1_A, cr, 4);
