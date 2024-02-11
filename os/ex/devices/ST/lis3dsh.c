@@ -346,7 +346,6 @@ static msg_t acc_reset_sensivity(void *ip) {
 static msg_t acc_set_full_scale(LIS3DSHDriver *devp, lis3dsh_acc_fs_t fs) {
   float newfs, scale;
   uint8_t i, cr;
-  msg_t msg;
 
   osalDbgCheck(devp != NULL);
 
@@ -372,8 +371,7 @@ static msg_t acc_set_full_scale(LIS3DSHDriver *devp, lis3dsh_acc_fs_t fs) {
     newfs = LIS3DSH_ACC_16G;
   }
   else {
-    msg = MSG_RESET;
-    return msg;
+    return MSG_RESET;
   }
 
   if(newfs != devp->accfullscale) {
@@ -420,7 +418,7 @@ static msg_t acc_set_full_scale(LIS3DSHDriver *devp, lis3dsh_acc_fs_t fs) {
       devp->accbias[i] *= scale;
     }
   }
-  return msg;
+  return MSG_OK;
 }
 
 static const struct LIS3DSHVMT vmt_device = {
