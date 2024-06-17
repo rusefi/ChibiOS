@@ -108,9 +108,9 @@ static void usart_init(SerialDriver *sdp, const SerialConfig *config) {
 #else
   if (sdp->usart == USART1)
 #endif
-    fck = STM32_PCLK2 / config->speed;
+    fck = (STM32_PCLK2 + config->speed / 2) / config->speed;
   else
-    fck = STM32_PCLK1 / config->speed;
+    fck = (STM32_PCLK1 + config->speed / 2) / config->speed;
 
   /* Correcting USARTDIV when oversampling by 8 instead of 16.
      Fraction is still 4 bits wide, but only lower 3 bits used.
@@ -181,7 +181,7 @@ static void set_error(SerialDriver *sdp, uint16_t sr) {
  */
 static void serve_interrupt(SerialDriver *sdp) {
   USART_TypeDef *u = sdp->usart;
-  uint16_t cr1 = u->CR1;
+  uint16_t cr1;
   uint16_t sr = u->SR;
 
   /* Special case, LIN break detection.*/
@@ -208,6 +208,9 @@ static void serve_interrupt(SerialDriver *sdp) {
   }
   osalSysUnlockFromISR();
 
+  /* Caching CR1.*/
+  cr1 = u->CR1;
+
   /* Transmission buffer empty.*/
   if ((cr1 & USART_CR1_TXEIE) && (sr & USART_SR_TXE)) {
     msg_t b;
@@ -215,7 +218,7 @@ static void serve_interrupt(SerialDriver *sdp) {
     b = oqGetI(&sdp->oqueue);
     if (b < MSG_OK) {
       chnAddFlagsI(sdp, CHN_OUTPUT_EMPTY);
-      u->CR1 = cr1 & ~USART_CR1_TXEIE;
+      cr1 &= ~USART_CR1_TXEIE;
     }
     else
       u->DR = b;
@@ -227,10 +230,13 @@ static void serve_interrupt(SerialDriver *sdp) {
     osalSysLockFromISR();
     if (oqIsEmptyI(&sdp->oqueue)) {
       chnAddFlagsI(sdp, CHN_TRANSMISSION_END);
-      u->CR1 = cr1 & ~USART_CR1_TCIE;
+      cr1 &= ~USART_CR1_TCIE;
     }
     osalSysUnlockFromISR();
   }
+
+  /* Writing CR1 once.*/
+  u->CR1 = cr1;
 }
 
 #if STM32_SERIAL_USE_USART1 || defined(__DOXYGEN__)
