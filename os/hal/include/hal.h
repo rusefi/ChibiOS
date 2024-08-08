@@ -30,6 +30,7 @@
 #include "osal.h"
 #include "board.h"
 #include "halconf.h"
+#include "limited_wait.h"
 
 /*===========================================================================*/
 /* Driver constants.                                                         */
