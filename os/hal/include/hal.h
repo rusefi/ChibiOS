@@ -28,6 +28,7 @@
 #include "osal.h"
 #include "board.h"
 #include "halconf.h"
+#include "limited_wait.h"
 
 /* Error checks on the configuration header file.*/
 #if !defined(HAL_USE_PAL)
