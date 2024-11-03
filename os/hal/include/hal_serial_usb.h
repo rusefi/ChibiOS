@@ -59,6 +59,22 @@
 #if !defined(SERIAL_USB_BUFFERS_NUMBER) || defined(__DOXYGEN__)
 #define SERIAL_USB_BUFFERS_NUMBER   2
 #endif
+
+#if !defined(SERIAL_USB_BUFFERS_RX_SIZE) ||  defined(__DOXYGEN__)
+#define SERIAL_USB_BUFFERS_RX_SIZE  SERIAL_USB_BUFFERS_SIZE
+#endif
+
+#if !defined(SERIAL_USB_BUFFERS_RX_NUMBER) ||  defined(__DOXYGEN__)
+#define SERIAL_USB_BUFFERS_RX_NUMBER  SERIAL_USB_BUFFERS_NUMBER
+#endif
+
+#if !defined(SERIAL_USB_BUFFERS_TX_SIZE) ||  defined(__DOXYGEN__)
+#define SERIAL_USB_BUFFERS_TX_SIZE  SERIAL_USB_BUFFERS_SIZE
+#endif
+
+#if !defined(SERIAL_USB_BUFFERS_TX_NUMBER) ||  defined(__DOXYGEN__)
+#define SERIAL_USB_BUFFERS_TX_NUMBER  SERIAL_USB_BUFFERS_NUMBER
+#endif
 /** @} */
 
 /*===========================================================================*/
@@ -67,6 +83,10 @@
 
 #if HAL_USE_USB == FALSE
 #error "Serial over USB Driver requires HAL_USE_USB"
+#endif
+
+#if (SERIAL_USB_BUFFERS_RX_SIZE != 64)
+#error "Please keep SERIAL_USB_BUFFERS_SIZE until https://forum.chibios.org/viewtopic.php?f=35&t=6395 is properly fixed!"
 #endif
 
 /*===========================================================================*/
@@ -125,11 +145,11 @@ typedef struct {
   /* Output queue.*/                                                        \
   output_buffers_queue_t    obqueue;                                        \
   /* Input buffer.*/                                                        \
-  uint8_t                   ib[BQ_BUFFER_SIZE(SERIAL_USB_BUFFERS_NUMBER,    \
-                                              SERIAL_USB_BUFFERS_SIZE)];    \
+  uint8_t                   ib[BQ_BUFFER_SIZE(SERIAL_USB_BUFFERS_RX_NUMBER, \
+                                              SERIAL_USB_BUFFERS_RX_SIZE)]; \
   /* Output buffer.*/                                                       \
-  uint8_t                   ob[BQ_BUFFER_SIZE(SERIAL_USB_BUFFERS_NUMBER,    \
-                                              SERIAL_USB_BUFFERS_SIZE)];    \
+  uint8_t                   ob[BQ_BUFFER_SIZE(SERIAL_USB_BUFFERS_TX_NUMBER, \
+                                              SERIAL_USB_BUFFERS_TX_SIZE)]; \
   /* End of the mandatory fields.*/                                         \
   /* Current configuration data.*/                                          \
   const SerialUSBConfig     *config;
