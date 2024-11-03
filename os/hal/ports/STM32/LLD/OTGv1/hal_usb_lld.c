@@ -521,6 +521,12 @@ static void otg_isoc_out_failed_handler(USBDriver *usbp) {
   }
 }
 
+
+/* IRQ flags which will trigger a retry around the IRQ loop */
+#define IRQ_RETRY_MASK (GINTSTS_NPTXFE | \
+      GINTSTS_PTXFE |  \
+      GINTSTS_RXFLVL)
+
 /**
  * @brief   OTG shared ISR.
  *
@@ -531,7 +537,9 @@ static void otg_isoc_out_failed_handler(USBDriver *usbp) {
 static void usb_lld_serve_interrupt(USBDriver *usbp) {
   stm32_otg_t *otgp = usbp->otg;
   uint32_t sts, src;
+  int retry_count = 8;
 
+irq_retry:
   sts  = otgp->GINTSTS;
   sts &= otgp->GINTMSK;
   otgp->GINTSTS = sts;
@@ -603,8 +611,12 @@ static void usb_lld_serve_interrupt(USBDriver *usbp) {
     otg_rxfifo_handler(usbp);
   }
 
+  src = 0;
   /* IN/OUT endpoints event handling.*/
-  src = otgp->DAINT;
+  if (sts & (GINTSTS_OEPINT | GINTSTS_IEPINT)) {
+    src = otgp->DAINT;
+  }
+
   if (sts & GINTSTS_OEPINT) {
     if (src & (1 << 16))
       otg_epout_handler(usbp, 0);
@@ -665,6 +677,14 @@ static void usb_lld_serve_interrupt(USBDriver *usbp) {
       otg_epin_handler(usbp, 8);
 #endif
   }
+
+  /*
+   * if we've had fifo events, we should try and go around the
+   * loop again to see if there's any point in returning yet.
+   */
+
+  if (sts & IRQ_RETRY_MASK && --retry_count > 0)
+    goto irq_retry;
 }
 
 /*===========================================================================*/
