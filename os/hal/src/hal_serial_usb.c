@@ -73,7 +73,7 @@ static bool sdu_start_receive(SerialUSBDriver *sdup) {
 
   /* Buffer found, starting a new transaction.*/
   usbStartReceiveI(sdup->config->usbp, sdup->config->bulk_out,
-                   buf, SERIAL_USB_BUFFERS_SIZE);
+                   buf, SERIAL_USB_BUFFERS_RX_SIZE);
 
   return false;
 }
@@ -225,10 +225,10 @@ void sduObjectInit(SerialUSBDriver *sdup) {
   osalEventObjectInit(&sdup->event);
   sdup->state = SDU_STOP;
   ibqObjectInit(&sdup->ibqueue, true, sdup->ib,
-                SERIAL_USB_BUFFERS_SIZE, SERIAL_USB_BUFFERS_NUMBER,
+                SERIAL_USB_BUFFERS_RX_SIZE, SERIAL_USB_BUFFERS_RX_NUMBER,
                 ibnotify, sdup);
   obqObjectInit(&sdup->obqueue, true, sdup->ob,
-                SERIAL_USB_BUFFERS_SIZE, SERIAL_USB_BUFFERS_NUMBER,
+                SERIAL_USB_BUFFERS_TX_SIZE, SERIAL_USB_BUFFERS_TX_NUMBER,
                 obnotify, sdup);
 }
 
