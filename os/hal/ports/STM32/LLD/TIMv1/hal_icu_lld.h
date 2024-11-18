@@ -674,6 +674,8 @@ typedef uint32_t icufreq_t;
 typedef enum {
   ICU_CHANNEL_1 = 0,              /**< Use TIMxCH1.      */
   ICU_CHANNEL_2 = 1,              /**< Use TIMxCH2.      */
+  ICU_CHANNEL_3 = 2,              /**< Use TIMxCH3.rusEFI*/
+  ICU_CHANNEL_4 = 3,              /**< Use TIMxCH4.rusEFI*/
 } icuchannel_t;
 
 /**
