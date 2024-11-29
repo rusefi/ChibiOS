@@ -189,13 +189,24 @@ static bool icu_lld_wait_edge(ICUDriver *icup) {
             (STM32_TIM_SR_CC1IF | STM32_TIM_SR_UIF)) == 0)
       ;
   }
-  else {
+  else if (icup->config->channel == ICU_CHANNEL_2) {
     /* Waiting for an edge.*/
     while (((sr = icup->tim->SR) &
             (STM32_TIM_SR_CC2IF | STM32_TIM_SR_UIF)) == 0)
       ;
   }
-
+  else if (icup->config->channel == ICU_CHANNEL_3) {
+    /* Waiting for an edge. */
+    while (((sr = icup->tim->SR) &
+            (STM32_TIM_SR_CC3IF | STM32_TIM_SR_UIF)) == 0)
+      ;
+  }
+  else if (icup->config->channel == ICU_CHANNEL_4) {
+    /* Waiting for an edge. */
+    while (((sr = icup->tim->SR) &
+            (STM32_TIM_SR_CC4IF | STM32_TIM_SR_UIF)) == 0)
+      ;
+  }
   /* Edge or overflow?*/
   result = (sr & STM32_TIM_SR_UIF) != 0 ? true : false;
 
@@ -205,6 +216,8 @@ static bool icu_lld_wait_edge(ICUDriver *icup) {
   /* Resetting all flags.*/
   icup->tim->SR &= ~(STM32_TIM_SR_CC1IF |
                      STM32_TIM_SR_CC2IF |
+                     STM32_TIM_SR_CC3IF |
+                     STM32_TIM_SR_CC4IF |
                      STM32_TIM_SR_UIF);
 
   return result;
@@ -553,7 +566,9 @@ void icu_lld_start(ICUDriver *icup) {
   uint32_t psc;
 
   osalDbgAssert((icup->config->channel == ICU_CHANNEL_1) ||
-                (icup->config->channel == ICU_CHANNEL_2),
+                (icup->config->channel == ICU_CHANNEL_2) ||
+                (icup->config->channel == ICU_CHANNEL_3) ||
+                (icup->config->channel == ICU_CHANNEL_4),
                 "invalid input");
 
   if (icup->state == ICU_STOP) {
@@ -821,7 +836,7 @@ void icu_lld_start(ICUDriver *icup) {
     icup->wccrp = &icup->tim->CCR[1];
     icup->pccrp = &icup->tim->CCR[0];
   }
-  else {
+  else if (icup->config->channel == ICU_CHANNEL_2) {
     /* Selected input 2.
        CCMR1_CC1S = 10 = CH1 Input on TI2.
        CCMR1_CC2S = 01 = CH2 Input on TI2.*/
@@ -845,6 +860,50 @@ void icu_lld_start(ICUDriver *icup) {
        data faster from within callbacks.*/
     icup->wccrp = &icup->tim->CCR[0];
     icup->pccrp = &icup->tim->CCR[1];
+  }
+  else if (icup->config->channel == ICU_CHANNEL_3) {
+    /* Selected input 3.
+       CCMR2_CC3S = 01 = CH3 Input on TI3. */
+    icup->tim->CCMR2 = STM32_TIM_CCMR2_CC3S(1);
+
+    /* SMCR_TS  = 111, input is TI3FP3.
+       SMCR_SMS = 100, reset on rising edge. */
+    icup->tim->SMCR  = STM32_TIM_SMCR_TS(7) | STM32_TIM_SMCR_SMS(4);
+
+    /* The CCER settings depend on the selected trigger mode.
+       ICU_INPUT_ACTIVE_HIGH: Active on rising edge, idle on falling edge.
+       ICU_INPUT_ACTIVE_LOW:  Active on falling edge, idle on rising edge. */
+    if (icup->config->mode == ICU_INPUT_ACTIVE_HIGH)
+      icup->tim->CCER = STM32_TIM_CCER_CC3E;
+    else
+      icup->tim->CCER = STM32_TIM_CCER_CC3E | STM32_TIM_CCER_CC3P;
+
+    /* Direct pointers to the capture registers in order to make reading
+       data faster from within callbacks. */
+    icup->wccrp = &icup->tim->CCR[2];
+    icup->pccrp = NULL; /* Channel 3 does not use paired captures in this mode. */
+  }
+  else if (icup->config->channel == ICU_CHANNEL_4) {
+    /* Selected input 4.
+       CCMR2_CC4S = 01 = CH4 Input on TI4. */
+    icup->tim->CCMR2 = STM32_TIM_CCMR2_CC4S(1);
+
+    /* SMCR_TS  = 111, input is TI4FP4.
+       SMCR_SMS = 100, reset on rising edge. */
+    icup->tim->SMCR  = STM32_TIM_SMCR_TS(7) | STM32_TIM_SMCR_SMS(4);
+
+    /* The CCER settings depend on the selected trigger mode.
+       ICU_INPUT_ACTIVE_HIGH: Active on rising edge, idle on falling edge.
+       ICU_INPUT_ACTIVE_LOW:  Active on falling edge, idle on rising edge. */
+    if (icup->config->mode == ICU_INPUT_ACTIVE_HIGH)
+      icup->tim->CCER = STM32_TIM_CCER_CC4E;
+    else
+      icup->tim->CCER = STM32_TIM_CCER_CC4E | STM32_TIM_CCER_CC4P;
+
+    /* Direct pointers to the capture registers in order to make reading
+       data faster from within callbacks. */
+    icup->wccrp = &icup->tim->CCR[3];
+    icup->pccrp = NULL; /* Channel 4 does not use paired captures in this mode. */
   }
 }
 
@@ -1066,13 +1125,19 @@ void icu_lld_enable_notifications(ICUDriver *icup) {
       if (icup->config->width_cb != NULL)
         dier |= STM32_TIM_DIER_CC2IE;
     }
-    else {
+    else if (icup->config->channel == ICU_CHANNEL_2) {
       /* Enabling periodic callback on CC2.*/
       dier |= STM32_TIM_DIER_CC2IE;
 
       /* Optionally enabling width callback on CC1.*/
       if (icup->config->width_cb != NULL)
         dier |= STM32_TIM_DIER_CC1IE;
+    }
+    else if (icup->config->channel == ICU_CHANNEL_3) {
+        dier |= STM32_TIM_DIER_CC3IE;
+    }
+    else if (icup->config->channel == ICU_CHANNEL_4) {
+        dier |= STM32_TIM_DIER_CC4IE;
     }
 
     /* If an overflow callback is defined then also the overflow callback
@@ -1120,11 +1185,21 @@ void icu_lld_serve_interrupt(ICUDriver *icup) {
     if ((sr & STM32_TIM_SR_CC1IF) != 0)
       _icu_isr_invoke_period_cb(icup);
   }
-  else {
+  else if (icup->config->channel == ICU_CHANNEL_2) {
     if ((sr & STM32_TIM_SR_CC1IF) != 0)
       _icu_isr_invoke_width_cb(icup);
     if ((sr & STM32_TIM_SR_CC2IF) != 0)
       _icu_isr_invoke_period_cb(icup);
+  }
+  else if (icup->config->channel == ICU_CHANNEL_3) {
+    if ((sr & STM32_TIM_SR_CC3IF) != 0)
+      _icu_isr_invoke_period_cb(icup);
+    // channel 3 doesn't have width pair
+  }
+  else if (icup->config->channel == ICU_CHANNEL_4) {
+    if ((sr & STM32_TIM_SR_CC4IF) != 0)
+      _icu_isr_invoke_period_cb(icup);
+    // channel 4 doesn't have width pair
   }
   if ((sr & STM32_TIM_SR_UIF) != 0)
     _icu_isr_invoke_overflow_cb(icup);
