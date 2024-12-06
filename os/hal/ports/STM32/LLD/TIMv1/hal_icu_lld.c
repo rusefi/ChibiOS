@@ -1177,26 +1177,35 @@ void icu_lld_serve_interrupt(ICUDriver *icup) {
   uint32_t sr;
 
   sr  = icup->tim->SR;
-  sr &= icup->tim->DIER & STM32_TIM_DIER_IRQ_MASK;
+  sr &= (icup->tim->DIER & STM32_TIM_DIER_IRQ_MASK) |
+        STM32_TIM_SR_CC1OF | STM32_TIM_SR_CC2OF | STM32_TIM_SR_CC3OF | STM32_TIM_SR_CC4OF;
   icup->tim->SR = ~sr;
   if (icup->config->channel == ICU_CHANNEL_1) {
+    if ((sr & (STM32_TIM_SR_CC1OF | STM32_TIM_SR_CC2OF)) != 0)
+        _icu_isr_invoke_overcapture_cb(icup);
     if ((sr & STM32_TIM_SR_CC2IF) != 0)
       _icu_isr_invoke_width_cb(icup);
     if ((sr & STM32_TIM_SR_CC1IF) != 0)
       _icu_isr_invoke_period_cb(icup);
   }
   else if (icup->config->channel == ICU_CHANNEL_2) {
+    if ((sr & (STM32_TIM_SR_CC1OF | STM32_TIM_SR_CC2OF)) != 0)
+        _icu_isr_invoke_overcapture_cb(icup);
     if ((sr & STM32_TIM_SR_CC1IF) != 0)
       _icu_isr_invoke_width_cb(icup);
     if ((sr & STM32_TIM_SR_CC2IF) != 0)
       _icu_isr_invoke_period_cb(icup);
   }
   else if (icup->config->channel == ICU_CHANNEL_3) {
+    if ((sr & STM32_TIM_SR_CC3OF) != 0)
+        _icu_isr_invoke_overcapture_cb(icup);
     if ((sr & STM32_TIM_SR_CC3IF) != 0)
       _icu_isr_invoke_period_cb(icup);
     // channel 3 doesn't have width pair
   }
   else if (icup->config->channel == ICU_CHANNEL_4) {
+    if ((sr & STM32_TIM_SR_CC4OF) != 0)
+        _icu_isr_invoke_overcapture_cb(icup);
     if ((sr & STM32_TIM_SR_CC4IF) != 0)
       _icu_isr_invoke_period_cb(icup);
     // channel 4 doesn't have width pair

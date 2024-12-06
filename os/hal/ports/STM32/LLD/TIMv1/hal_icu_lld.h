@@ -727,6 +727,10 @@ typedef struct {
    * @note  The value of this field should normally be equal to 0xFFFFFFFFU.
    */
   uint32_t                  arr;
+  /**
+   * @brief   Callback for channel overcapture.
+   */
+  icucallback_t             overcapture_cb;
 } ICUConfig;
 
 /**

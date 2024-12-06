@@ -222,6 +222,19 @@ typedef void (*icucallback_t)(ICUDriver *icup);
 
 #else /* ICU_USE_OVERFLOW_SCALING != TRUE */
 /**
+ * @brief   Common ISR code, ICU overcapture event.
+ *
+ * @param[in] icup      pointer to the @p ICUDriver object
+ *
+ * @notapi
+ */
+#define _icu_isr_invoke_overcapture_cb(icup) do {                           \
+  if (((icup)->state == ICU_ACTIVE) &&                                      \
+      ((icup)->config->overcapture_cb != NULL))                             \
+    (icup)->config->overcapture_cb(icup);                                   \
+} while (0)
+
+/**
  * @brief   Common ISR code, ICU timer overflow event.
  * @note    An overflow always brings the driver back to the @p ICU_WAITING
  *          state.
