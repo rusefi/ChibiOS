@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
     ChibiOS - Copyright (C) 2006-2026 Giovanni Di Sirio.
+=======
+    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
+>>>>>>> 751356a7a2 (rusEfi: LSE wait: do not reset BKP domain if RTC was switched to backup clock)
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,6 +32,7 @@
 /* Driver local definitions.                                                 */
 /*===========================================================================*/
 
+<<<<<<< HEAD
 /**
  * @brief   Number of thresholds in the wait states array.
  */
@@ -52,16 +57,19 @@
                                          PWR_CR1_FPD_STOP  |                \
                                          PWR_CR1_LPMS_Msk)
 
+=======
+>>>>>>> 751356a7a2 (rusEfi: LSE wait: do not reset BKP domain if RTC was switched to backup clock)
 /*===========================================================================*/
 /* Driver exported variables.                                                */
 /*===========================================================================*/
 
 /**
  * @brief   CMSIS system core clock variable.
- * @note    It is declared in system_stm32g0xx.h.
+ * @note    It is declared in system_stm32l4xx.h.
  */
 uint32_t SystemCoreClock = STM32_HCLK;
 
+<<<<<<< HEAD
 /**
  * @brief   Post-reset clock configuration.
  */
@@ -121,10 +129,13 @@ const halclkcfg_t hal_clkcfg_default = {
 #endif
 };
 
+=======
+>>>>>>> 751356a7a2 (rusEfi: LSE wait: do not reset BKP domain if RTC was switched to backup clock)
 /*===========================================================================*/
 /* Driver local variables and types.                                         */
 /*===========================================================================*/
 
+<<<<<<< HEAD
 #if defined(HAL_LLD_USE_CLOCK_MANAGEMENT) || defined(__DOXYGEN__)
 /**
  * @brief   Dynamic clock points for this device.
@@ -201,19 +212,20 @@ static const system_limits_t vos_range2 = {
 };
 #endif /* defined(HAL_LLD_USE_CLOCK_MANAGEMENT) */
 
+=======
+>>>>>>> 751356a7a2 (rusEfi: LSE wait: do not reset BKP domain if RTC was switched to backup clock)
 /*===========================================================================*/
 /* Driver local functions.                                                   */
 /*===========================================================================*/
 
-#include "stm32_bd.inc"
-
 /**
- * @brief   Safe setting of flash ACR register.
- *
- * @param[in] acr       value for the ACR register
+ * @brief   Initializes the backup domain.
+ * @note    WARNING! Changing RTC clock source impossible without resetting
+ *          of the whole BKP domain.
  */
-__STATIC_INLINE void flash_set_acr(uint32_t acr) {
+static void hal_lld_backup_domain_init(void) {
 
+<<<<<<< HEAD
 #if defined(STM32G0B0xx)
   /* Set ACR. Note: retaining set bits in ACR required.*/
   FLASH->ACR |= acr;
@@ -222,9 +234,18 @@ __STATIC_INLINE void flash_set_acr(uint32_t acr) {
 #endif
   while ((FLASH->ACR & FLASH_ACR_LATENCY_Msk) != (acr & FLASH_ACR_LATENCY_Msk)) {
     /* Waiting for flash wait states setup.*/
+=======
+  /* Reset BKP domain if different clock source selected.
+     Do not reset if fallback source is selected */
+  if (((RCC->BDCR & STM32_RTCSEL_MASK) != STM32_RTCSEL) &&
+      ((RCC->BDCR & STM32_RTCSEL_MASK) != RUSEFI_STM32_LSE_WAIT_MAX_RTCSEL)) {
+    /* Backup domain reset.*/
+    RCC->BDCR = RCC_BDCR_BDRST;
+    RCC->BDCR = 0;
+>>>>>>> 751356a7a2 (rusEfi: LSE wait: do not reset BKP domain if RTC was switched to backup clock)
   }
-}
 
+<<<<<<< HEAD
 /**
  * @brief   Configures the PWR unit.
  * @note    CR1, CR2 and CR5 are not initialized inside this function.
@@ -303,14 +324,19 @@ __STATIC_INLINE void hal_lld_set_static_clocks(void) {
   RCC->CCIPR2 = STM32_USBSEL    | STM32_FDCANSEL   | STM32_I2S2SEL   |
                 STM32_I2S1SEL;
 
+=======
+#if STM32_LSE_ENABLED
+  int rusefiLseCounter = 0;
+  /* LSE activation.*/
+#if defined(STM32_LSE_BYPASS)
+  /* LSE Bypass.*/
+  RCC->BDCR |= STM32_LSEDRV | RCC_BDCR_LSEON | RCC_BDCR_LSEBYP;
+>>>>>>> 751356a7a2 (rusEfi: LSE wait: do not reset BKP domain if RTC was switched to backup clock)
 #else
-  /* CCIPR register initialization.*/
-  RCC->CCIPR =  STM32_ADCSEL    | STM32_RNGDIV     | STM32_RNGSEL    |
-                STM32_TIM15SEL  | STM32_TIM1SEL    | STM32_LPTIM2SEL |
-                STM32_LPTIM1SEL | STM32_I2S1SEL    | STM32_I2C1SEL   |
-                STM32_CECSEL    | STM32_USART3SEL  | STM32_USART2SEL |
-                STM32_USART1SEL | STM32_LPUART2SEL | STM32_LPUART1SEL;
+  /* No LSE Bypass.*/
+  RCC->BDCR |= STM32_LSEDRV | RCC_BDCR_LSEON;
 #endif
+<<<<<<< HEAD
 }
 
 /**
@@ -786,8 +812,36 @@ static bool hal_lld_clock_raw_switch(const halclkswc_t *cwp) {
 
   return false;
 }
+=======
+  /* Waits until LSE is stable or times out. */
+  while ((!RUSEFI_STM32_LSE_WAIT_MAX || rusefiLseCounter++ < RUSEFI_STM32_LSE_WAIT_MAX)
+      && (RCC->BDCR & RCC_BDCR_LSERDY) == 0)
+    ;
 #endif
-#endif /* defined(HAL_LLD_USE_CLOCK_MANAGEMENT) */
+
+#if HAL_USE_RTC
+  /* If the backup domain hasn't been initialized yet then proceed with
+     initialization.*/
+  if ((RCC->BDCR & RCC_BDCR_RTCEN) == 0) {
+    /* Selects clock source.*/
+    /* TODO: what should we do if we were able to start primary RTC source while RTC already switched to backuo one?
+       Switching source require reseting whole BKP domain! */
+#if STM32_LSE_ENABLED
+    /* TODO: here we expect STM32_RTCSEL to be STM32_RTCSEL_LSE */
+    RCC->BDCR |= (RCC->BDCR & RCC_BDCR_LSERDY) ? STM32_RTCSEL : RUSEFI_STM32_LSE_WAIT_MAX_RTCSEL;
+#else
+    RCC->BDCR |= STM32_RTCSEL;
+>>>>>>> 751356a7a2 (rusEfi: LSE wait: do not reset BKP domain if RTC was switched to backup clock)
+#endif
+
+    /* RTC clock enabled.*/
+    RCC->BDCR |= RCC_BDCR_RTCEN;
+  }
+#endif /* HAL_USE_RTC */
+
+  /* Low speed output mode.*/
+  RCC->BDCR |= STM32_LSCOSEL;
+}
 
 /*===========================================================================*/
 /* Driver interrupt handlers.                                                */
@@ -804,16 +858,27 @@ static bool hal_lld_clock_raw_switch(const halclkswc_t *cwp) {
  */
 void hal_lld_init(void) {
 
+  /* Reset of all peripherals.*/
+  rccResetAHB(~0);
+  rccResetAPBR1(~RCC_APBRSTR1_PWRRST);
+  rccResetAPBR2(~0);
+
+  /* PWR clock enabled.*/
+  rccEnablePWRInterface(true);
+
+  /* Initializes the backup domain.*/
+  hal_lld_backup_domain_init();
+
   /* DMA subsystems initialization.*/
 #if defined(STM32_DMA_REQUIRED)
   dmaInit();
 #endif
 
-  /* NVIC initialization.*/
-  nvicInit();
-
   /* IRQ subsystem initialization.*/
   irqInit();
+
+  /* Programmable voltage detector settings.*/
+  PWR->CR2 = STM32_PWR_CR2;
 }
 
 /**
@@ -859,7 +924,9 @@ void stm32_clock_init(void) {
 #endif
 
 #if defined(HAL_USE_RTC) && defined(RCC_APBENR1_RTCAPBEN)
-  rccEnableAPBR1(RCC_APBENR1_RTCAPBEN, true);
+  RCC->APBENR1 = RCC_APBENR1_PWREN | RCC_APBENR1_RTCAPBEN;
+#else
+  RCC->APBENR1 = RCC_APBENR1_PWREN;
 #endif
 
   /* Static PWR configurations.*/
