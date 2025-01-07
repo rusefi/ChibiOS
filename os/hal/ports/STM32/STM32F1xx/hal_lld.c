@@ -57,8 +57,10 @@ static void hal_lld_backup_domain_init(void) {
   PWR->CR |= PWR_CR_DBP;
 
 #if HAL_USE_RTC
-  /* Reset BKP domain if different clock source selected.*/
-  if ((RCC->BDCR & STM32_RTCSEL_MASK) != STM32_RTCSEL) {
+  /* Reset BKP domain if different clock source selected.
+     Do not reset if fallback source is selected */
+  if (((RCC->BDCR & STM32_RTCSEL_MASK) != STM32_RTCSEL) &&
+      ((RCC->BDCR & STM32_RTCSEL_MASK) != RUSEFI_STM32_LSE_WAIT_MAX_RTCSEL)) {
     /* Backup domain reset.*/
     RCC->BDCR = RCC_BDCR_BDRST;
     RCC->BDCR = 0;
@@ -85,8 +87,11 @@ static void hal_lld_backup_domain_init(void) {
      initialization.*/
   if ((RCC->BDCR & RCC_BDCR_RTCEN) == 0) {
     /* Selects clock source.*/
+    /* TODO: what should we do if we were able to start primary RTC source while RTC already switched to backuo one?
+       Switching source require reseting whole BKP domain! */
 #if STM32_LSE_ENABLED
-    RCC->BDCR |= (RCC->BDCR & RCC_BDCR_LSERDY) == 0 ? RUSEFI_STM32_LSE_WAIT_MAX_RTCSEL : STM32_RTCSEL;
+    /* TODO: here we expect STM32_RTCSEL to be STM32_RTCSEL_LSE */
+    RCC->BDCR |= (RCC->BDCR & RCC_BDCR_LSERDY) ? STM32_RTCSEL : RUSEFI_STM32_LSE_WAIT_MAX_RTCSEL;
 #else
     RCC->BDCR |= STM32_RTCSEL;
 #endif
