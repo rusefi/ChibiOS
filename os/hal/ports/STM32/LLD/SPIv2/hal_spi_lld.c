@@ -703,12 +703,12 @@ uint16_t spi_lld_polled_exchange(SPIDriver *spip, uint16_t frame) {
                                            SPI_CR2_DS_0)) {
     volatile uint8_t *spidr = (volatile uint8_t *)&spip->spi->DR;
     *spidr = (uint8_t)frame;
-    LIMITED_WHILE_LOOP("SPI_SR_RXNE",  (spip->spi->SR & SPI_SR_RXNE) == 0);
+    LIMITED_WHILE_LOOP((spip->spi->SR & SPI_SR_RXNE) == 0, "SPI_SR_RXNE %p", spip->spi);
     return (uint16_t)*spidr;
   }
   else {
     spip->spi->DR = frame;
-    LIMITED_WHILE_LOOP("SPI_SR_RXNE",  (spip->spi->SR & SPI_SR_RXNE) == 0);
+    LIMITED_WHILE_LOOP((spip->spi->SR & SPI_SR_RXNE) == 0, "SPI_SR_RXNE %p", spip->spi);
     return spip->spi->DR;
   }
 }
