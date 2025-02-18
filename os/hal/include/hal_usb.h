@@ -617,6 +617,8 @@ extern "C" {
 #if USB_USE_WAIT == TRUE
   msg_t usbReceive(USBDriver *usbp, usbep_t ep, uint8_t *buf, size_t n);
   msg_t usbTransmit(USBDriver *usbp, usbep_t ep, const uint8_t *buf, size_t n);
+  msg_t usbTransmitStart(USBDriver *usbp, usbep_t ep, const uint8_t *buf, size_t n);
+  msg_t usbTransmitWait(USBDriver *usbp, usbep_t ep);
 #endif
   bool usbStallReceiveI(USBDriver *usbp, usbep_t ep);
   bool usbStallTransmitI(USBDriver *usbp, usbep_t ep);

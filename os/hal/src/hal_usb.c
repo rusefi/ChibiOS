@@ -582,6 +582,69 @@ msg_t usbTransmit(USBDriver *usbp, usbep_t ep, const uint8_t *buf, size_t n) {
 
   return msg;
 }
+
+/**
+ * @brief   Starts a transmit transaction on an IN endpoint.
+ *
+ * @param[in] usbp      pointer to the @p USBDriver object
+ * @param[in] ep        endpoint number
+ * @param[in] buf       buffer where to fetch the data to be transmitted
+ * @param[in] n         transaction size
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       operation started successfully.
+ * @retval MSG_RESET    driver not in @p USB_ACTIVE state
+ *
+ * @api
+ */
+msg_t usbTransmitStart(USBDriver *usbp, usbep_t ep, const uint8_t *buf, size_t n) {
+  osalSysLock();
+
+  if (usbGetDriverStateI(usbp) != USB_ACTIVE) {
+    osalSysUnlock();
+    return MSG_RESET;
+  }
+
+  usbStartTransmitI(usbp, ep, buf, n);
+  osalSysUnlock();
+
+  return MSG_OK;
+}
+
+/**
+ * @brief   Waits until a transmit transaction end on an IN endpoint.
+ *
+ * @param[in] usbp      pointer to the @p USBDriver object
+ * @param[in] ep        endpoint number
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       operation performed successfully.
+ * @retval MSG_RESET    driver not in @p USB_ACTIVE state or the operation
+ *                      has been aborted by an USB reset or a transition to
+ *                      the @p USB_SUSPENDED state.
+ *
+ * @api
+ */
+msg_t usbTransmitWait(USBDriver *usbp, usbep_t ep) {
+  msg_t msg;
+
+  osalSysLock();
+
+  if (usbGetDriverStateI(usbp) != USB_ACTIVE) {
+    osalSysUnlock();
+    return MSG_RESET;
+  }
+
+  if ((usbp->transmitting & (uint16_t)((unsigned)1U << (unsigned)ep)) == 0) {
+    osalSysUnlock();
+    return MSG_OK;
+  }
+
+  msg = osalThreadSuspendS(&usbp->epc[ep]->in_state->thread);
+  osalSysUnlock();
+
+  return msg;
+}
 #endif /* USB_USE_WAIT == TRUE */
 
 /**
