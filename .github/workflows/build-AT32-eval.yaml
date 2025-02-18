@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -27,7 +27,7 @@ jobs:
 
       - name: Attach USB_CDC_IAD
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: USB_CDC_IAD binaries
           path: testhal/AT32/AT32F4xx/USB_CDC_IAD/build/ch*.*
@@ -39,7 +39,7 @@ jobs:
 
       - name: Attach RT-AT32F435-ARTERY144
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: RT-AT32F435-ARTERY144 binaries
           path: demos/STM32/RT-AT32F435-ARTERY144/build/ch*.*
@@ -51,7 +51,7 @@ jobs:
 
       - name: Attach ADC
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ADC binaries
           path: testhal/AT32/AT32F4xx/ADC/build/ch*.*
