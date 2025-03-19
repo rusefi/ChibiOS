@@ -146,7 +146,7 @@ typedef struct ch_system_debug {
   if (CH_DBG_ENABLE_ASSERTS != FALSE) {                                     \
     if (unlikely(!(c))) {                                                   \
   /*lint -restore*/                                                         \
-      chSysHalt(__func__);                                                  \
+      chSysHalt(r);                                                         \
     }                                                                       \
   }                                                                         \
 } while (false)
