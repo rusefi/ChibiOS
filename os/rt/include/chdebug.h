@@ -129,7 +129,7 @@
   if (CH_DBG_ENABLE_ASSERTS != FALSE) {                                     \
     if (!(c)) {                                                             \
   /*lint -restore*/                                                         \
-      chSysHalt(__func__);                                                  \
+      chSysHalt(r);                                                         \
     }                                                                       \
   }                                                                         \
 } while (false)
