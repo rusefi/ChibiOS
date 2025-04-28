@@ -38,6 +38,7 @@
 #define ADC_ERR_DMAFAILURE      1U  /**< DMA operations failure.            */
 #define ADC_ERR_OVERFLOW        2U  /**< ADC overflow condition.            */
 #define ADC_ERR_AWD             4U  /**< Watchdog triggered.                */
+#define ADC_ERR_DMAFIFOERROR    8U  /**< DMA FIFO error.                    */
 /** @} */
 
 /**
