@@ -32,6 +32,9 @@
 #include "chprintf.h"
 #include "memstreams.h"
 
+// For isnan()
+#include <math.h>
+
 #define MAX_FILLER 11
 #define FLOAT_PRECISION 9
 
@@ -82,12 +85,7 @@ static char *ftoa(char *p, double num, unsigned long precision) {
   };
   long l;
 
-#define rusefi_cisnan(f) (*(((int*) (&f))) == 0x7FC00000)
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-aliasing"
-  if (rusefi_cisnan(num)) {
-#pragma GCC diagnostic pop
+  if (isnan(num)) {
         *p ++ = 'N';
         *p ++ = 'a';
         *p ++ = 'N';
