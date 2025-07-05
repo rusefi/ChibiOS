@@ -283,6 +283,23 @@ struct port_context {
 #define PORT_FAST_IRQ_HANDLER(id) void id(void)
 #endif
 
+/**
+ * @brief   Returns a word representing a critical section status.
+ *
+ * @return              The critical section status.
+ */
+#define port_get_lock_status() 0U
+
+/**
+ * @brief   Determines if in a critical section.
+ *
+ * @param[in] sts       status word returned by @p port_get_lock_status()
+ * @return              The current status.
+ * @retval false        if running outside a critical section.
+ * @retval true         if running within a critical section.
+ */
+#define port_is_locked(sts) ((sts) != 0U)
+
 /*===========================================================================*/
 /* External declarations.                                                    */
 /*===========================================================================*/
