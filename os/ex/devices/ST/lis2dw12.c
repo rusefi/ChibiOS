@@ -478,7 +478,7 @@ msg_t lis2dw12Start(LIS2DW12Driver *devp, const LIS2DW12Config *config) {
 
   /* Control register 1 configuration block.*/
   {
-    cr[0] = devp->config->accoutputdatarate |
+    cr[0] = devp->config->accodr |
             devp->config->accoutputresolution |
             devp->config->acclowpowermode;
   }

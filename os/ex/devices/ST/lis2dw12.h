@@ -379,7 +379,7 @@ typedef struct {
   /**
    * @brief LIS2DW12 output data rate selection.
    */
-  lis2dw12_acc_odr_t        accoutputdatarate;
+  lis2dw12_acc_odr_t        accodr;
   /**
    * @brief LIS2DW12 output data resolution selection.
    */
