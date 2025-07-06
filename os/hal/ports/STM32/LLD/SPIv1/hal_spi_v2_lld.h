@@ -314,7 +314,7 @@
 
 /* The following checks are only required when there is a DMA able to
    reassign streams to different channels.*/
-#if STM32_ADVANCED_DMA
+#if STM32_ADVANCED_DMA && !STM32_DMA_SUPPORTS_DMAMUX
 /* Check on the presence of the DMA streams settings in mcuconf.h.*/
 #if STM32_SPI_USE_SPI1 && (!defined(STM32_SPI_SPI1_RX_DMA_STREAM) ||        \
                            !defined(STM32_SPI_SPI1_TX_DMA_STREAM))
