@@ -22,6 +22,8 @@
  * @{
  */
 
+#include <string.h>
+
 #include "hal.h"
 #include "hal_serial_nor.h"
 
@@ -327,22 +329,56 @@ static flash_error_t snor_release_exclusive(void *instance) {
 }
 
 #if (SNOR_BUS_DRIVER == SNOR_BUS_DRIVER_SPI) || defined(__DOXYGEN__)
-void snor_spi_cmd_addr(SNORDriver *devp, uint32_t cmd, flash_offset_t offset) {
+
+#if SNOR_SPI_WORKAROUND_CACHE
+static void __spiSend(SNORDriver *devp, size_t n, const void *txbuf)
+{
   BUSDriver *busp = devp->config->busp;
-  uint8_t *buf = devp->nocache->buf;
+  while (n) {
+    size_t chunk = (n > SNOR_BUFFER_SIZE) ? SNOR_BUFFER_SIZE : n;
+    memcpy(devp->nocache->buf, txbuf, chunk);
+    /* ensures that all memory accesses are completed */
+    __DSB();
+    spiSend(busp, chunk, devp->nocache->buf);
+    txbuf += chunk;
+    n -= chunk;
+  }
+}
+
+static void __spiReceive(SNORDriver *devp, size_t n, void *rxbuf)
+{
+  BUSDriver *busp = devp->config->busp;
+  while (n) {
+    size_t chunk = (n > SNOR_BUFFER_SIZE) ? SNOR_BUFFER_SIZE : n;
+    spiReceive(busp, chunk, devp->nocache->buf);
+    memcpy(rxbuf, devp->nocache->buf, chunk);
+    rxbuf += chunk;
+    n -= chunk;
+  }
+}
+#else
+#define __spiSend(devp, n txbuf)    spiSend(devp->config->busp, n, txbuf)
+#define __spiReceive(devp, n rxbuf) spiReceive(devp->config->busp, n, rxbuf)
+#endif
+
+void snor_spi_cmd_addr(SNORDriver *devp, uint32_t cmd, flash_offset_t offset) {
 #if (SNOR_SPI_4BYTES_ADDRESS == TRUE)
+  uint8_t buf[5];
+
   buf[0] = cmd;
   buf[1] = (uint8_t)(offset >> 24);
   buf[2] = (uint8_t)(offset >> 16);
   buf[3] = (uint8_t)(offset >> 8);
   buf[4] = (uint8_t)(offset >> 0);
-  spiSend(busp, 5, buf);
+  __spiSend(devp, 5, buf);
 #else
+  uint8_t buf[4];
+
   buf[0] = cmd;
   buf[1] = (uint8_t)(offset >> 16);
   buf[2] = (uint8_t)(offset >> 8);
   buf[3] = (uint8_t)(offset >> 0);
-  spiSend(busp, 4, buf);
+  __spiSend(devp, 4, buf);
 #endif
 }
 #endif
@@ -436,45 +472,14 @@ void bus_cmd(SNORDriver *devp, uint32_t cmd) {
   mode.dummy = 0U;
   wspiCommand(busp, &mode);
 #else
-  uint8_t *buf = devp->nocache->buf;
+  uint8_t buf[1];
 
   spiSelect(busp);
   buf[0] = cmd;
-  spiSend(busp, 1, buf);
+  __spiSend(devp, 1, buf);
   spiUnselect(busp);
 #endif
 }
-
-#if SNOR_BUS_DRIVER == SNOR_BUS_DRIVER_SPI
-#if SNOR_SPI_WORKAROUND_CACHE
-
-#include <string.h>
-static void spiSendNoCache(SNORDriver *devp, size_t n, const void *txbuf)
-{
-  BUSDriver *busp = devp->config->busp;
-  while (n) {
-    size_t chunk = (n > SNOR_BUFFER_SIZE) ? SNOR_BUFFER_SIZE : n;
-    memcpy(devp->nocache->buf, txbuf, chunk);
-    spiSend(busp, chunk, devp->nocache->buf);
-    txbuf += chunk;
-    n -= chunk;
-  }
-}
-
-static void spiReceiveNoCache(SNORDriver *devp, size_t n, void *rxbuf)
-{
-  BUSDriver *busp = devp->config->busp;
-  while (n) {
-    size_t chunk = (n > SNOR_BUFFER_SIZE) ? SNOR_BUFFER_SIZE : n;
-    spiReceive(busp, chunk, devp->nocache->buf);
-    memcpy(rxbuf, devp->nocache->buf, chunk);
-    rxbuf += chunk;
-    n -= chunk;
-  }
-}
-
-#endif
-#endif
 
 /**
  * @brief   Sends a command followed by a data transmit phase.
@@ -498,16 +503,12 @@ void bus_cmd_send(SNORDriver *devp, uint32_t cmd, size_t n, const uint8_t *p) {
   mode.dummy = 0U;
   wspiSend(busp, &mode, n, p);
 #else
-  uint8_t *buf = devp->nocache->buf;
+  uint8_t buf[1];
 
   spiSelect(busp);
   buf[0] = cmd;
-  spiSend(busp, 1, buf);
-#if SNOR_SPI_WORKAROUND_CACHE
-  spiSendNoCache(devp, n, p);
-#else
-  spiSend(busp, n, p);
-#endif
+  __spiSend(devp, 1, buf);
+  __spiSend(devp, n, p);
   spiUnselect(busp);
 #endif
 }
@@ -537,16 +538,12 @@ void bus_cmd_receive(SNORDriver *devp,
   mode.dummy = 0U;
   wspiReceive(busp, &mode, n, p);
 #else
-  uint8_t *buf = devp->nocache->buf;
+  uint8_t buf[1];
 
   spiSelect(busp);
   buf[0] = cmd;
-  spiSend(busp, 1, p);
-#if SNOR_SPI_WORKAROUND_CACHE
-  spiReceiveNoCache(devp, n, p);
-#else
-  spiReceive(busp, n, p);
-#endif
+  __spiSend(devp, 1, buf);
+  __spiReceive(devp, n, p);
   spiUnselect(busp);
 #endif
 }
@@ -608,11 +605,7 @@ void bus_cmd_addr_send(SNORDriver *devp,
 #else
   spiSelect(busp);
   snor_spi_cmd_addr(devp, cmd, offset);
-#if SNOR_SPI_WORKAROUND_CACHE
-  spiSendNoCache(devp, n, p);
-#else
-  spiSend(busp, n, p);
-#endif
+  __spiSend(devp, n, p);
   spiUnselect(busp);
 #endif
 }
@@ -647,7 +640,7 @@ void bus_cmd_addr_receive(SNORDriver *devp,
 #else
   spiSelect(busp);
   snor_spi_cmd_addr(devp, cmd, offset);
-  spiReceive(busp, n, p);
+  __spiReceive(devp, n, p);
   spiUnselect(busp);
 #endif
 }
@@ -680,21 +673,17 @@ void bus_cmd_dummy_receive(SNORDriver *devp,
   mode.dummy = dummy;
   wspiReceive(busp, &mode, n, p);
 #else
-  uint8_t *buf = devp->nocache->buf;
+  uint8_t buf[1];
 
   osalDbgAssert((dummy & 7) == 0U, "multiple of 8 dummy cycles");
 
   spiSelect(busp);
   buf[0] = cmd;
-  spiSend(busp, 1, buf);
+  __spiSend(devp, 1, buf);
   if (dummy != 0U) {
     spiIgnore(busp, dummy / 8U);
   }
-#if SNOR_SPI_WORKAROUND_CACHE
-  spiReceiveNoCache(devp, n, p);
-#else
-  spiReceive(busp, n, p);
-#endif
+  __spiReceive(devp, n, p);
   spiUnselect(busp);
 #endif
 }
@@ -736,7 +725,7 @@ void bus_cmd_addr_dummy_receive(SNORDriver *devp,
   if (dummy != 0U) {
     spiIgnore(busp, dummy / 8U);
   }
-  spiReceive(busp, n, p);
+  __spiReceive(devp, n, p);
   spiUnselect(busp);
 #endif
 }
