@@ -201,29 +201,29 @@ extern "C" {
   void bus_acquire(BUSDriver *busp, const BUSConfig *config);
   void bus_release(BUSDriver *busp);
 #endif
-  void bus_cmd(BUSDriver *busp, uint32_t cmd);
-  void bus_cmd_send(BUSDriver *busp, uint32_t cmd, size_t n, const uint8_t *p);
-  void bus_cmd_receive(BUSDriver *busp,
+  void bus_cmd(SNORDriver *devp, uint32_t cmd);
+  void bus_cmd_send(SNORDriver *devp, uint32_t cmd, size_t n, const uint8_t *p);
+  void bus_cmd_receive(SNORDriver *devp,
                        uint32_t cmd,
                        size_t n,
                        uint8_t *p);
-  void bus_cmd_addr(BUSDriver *busp, uint32_t cmd, flash_offset_t offset);
-  void bus_cmd_addr_send(BUSDriver *busp,
+  void bus_cmd_addr(SNORDriver *devp, uint32_t cmd, flash_offset_t offset);
+  void bus_cmd_addr_send(SNORDriver *devp,
                          uint32_t cmd,
                          flash_offset_t offset,
                          size_t n,
                          const uint8_t *p);
-  void bus_cmd_addr_receive(BUSDriver *busp,
+  void bus_cmd_addr_receive(SNORDriver *devp,
                             uint32_t cmd,
                             flash_offset_t offset,
                             size_t n,
                             uint8_t *p);
-  void bus_cmd_dummy_receive(BUSDriver *busp,
+  void bus_cmd_dummy_receive(SNORDriver *devp,
                              uint32_t cmd,
                              uint32_t dummy,
                              size_t n,
                              uint8_t *p);
-  void bus_cmd_addr_dummy_receive(BUSDriver *busp,
+  void bus_cmd_addr_dummy_receive(SNORDriver *devp,
                                   uint32_t cmd,
                                   flash_offset_t offset,
                                   uint32_t dummy,
