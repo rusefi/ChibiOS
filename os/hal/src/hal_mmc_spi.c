@@ -896,7 +896,7 @@ bool mmcSequentialRead(MMCDriver *mmcp, uint8_t *buffer) {
   }
 
   for (i = 0; i < MMC_WAIT_DATA; i++) {
-    spiReceiveSmall(mmcp->config->spip, 1, buffer);
+    spiReceiveSmall(mmcp->config->spip, 1, mmcp->buffer);
     if (mmcp->buffer[0] == 0xFEU) {
       #ifdef STM32H7XX
       /* workaround for silicon errata */
