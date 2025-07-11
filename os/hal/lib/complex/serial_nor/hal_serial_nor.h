@@ -87,6 +87,16 @@
 #if !defined(SNOR_SPI_4BYTES_ADDRESS) || defined(__DOXYGEN__)
 #define SNOR_SPI_4BYTES_ADDRESS             FALSE
 #endif
+
+/**
+ * @brief   Cache workaround switch
+ * @details If set to @p TRUE the device will use nocache buffer
+ *          as intermediate buffer for all SPI tx and rx data
+ *          This should help avoid caching issues.
+ */
+#if !defined(SNOR_SPI_WORKAROUND_CACHE) || defined(__DOXYGEN__)
+#define SNOR_SPI_WORKAROUND_CACHE           FALSE
+#endif
 /** @} */
 
 /*===========================================================================*/
