@@ -445,6 +445,35 @@ void bus_cmd(SNORDriver *devp, uint32_t cmd) {
 #endif
 }
 
+#if SNOR_SPI_WORKAROUND_CACHE
+
+#include <string.h>
+static void spiSendNoCache(SNORDriver *devp, size_t n, const void *txbuf)
+{
+  BUSDriver *busp = devp->config->busp;
+  while (n) {
+    size_t chunk = (n > SNOR_BUFFER_SIZE) ? SNOR_BUFFER_SIZE : n;
+    memcpy(devp->nocache->buf, txbuf, chunk);
+    spiSend(busp, chunk, devp->nocache->buf);
+    txbuf += chunk;
+    n -= chunk;
+  }
+}
+
+static void spiReceiveNoCache(SNORDriver *devp, size_t n, void *rxbuf)
+{
+  BUSDriver *busp = devp->config->busp;
+  while (n) {
+    size_t chunk = (n > SNOR_BUFFER_SIZE) ? SNOR_BUFFER_SIZE : n;
+    spiReceive(busp, chunk, devp->nocache->buf);
+    memcpy(rxbuf, devp->nocache->buf, chunk);
+    rxbuf += chunk;
+    n -= chunk;
+  }
+}
+
+#endif
+
 /**
  * @brief   Sends a command followed by a data transmit phase.
  *
@@ -472,7 +501,11 @@ void bus_cmd_send(SNORDriver *devp, uint32_t cmd, size_t n, const uint8_t *p) {
   spiSelect(busp);
   buf[0] = cmd;
   spiSend(busp, 1, buf);
+#if SNOR_SPI_WORKAROUND_CACHE
+  spiSendNoCache(devp, n, p);
+#else
   spiSend(busp, n, p);
+#endif
   spiUnselect(busp);
 #endif
 }
@@ -507,7 +540,11 @@ void bus_cmd_receive(SNORDriver *devp,
   spiSelect(busp);
   buf[0] = cmd;
   spiSend(busp, 1, p);
+#if SNOR_SPI_WORKAROUND_CACHE
+  spiReceiveNoCache(devp, n, p);
+#else
   spiReceive(busp, n, p);
+#endif
   spiUnselect(busp);
 #endif
 }
@@ -569,7 +606,11 @@ void bus_cmd_addr_send(SNORDriver *devp,
 #else
   spiSelect(busp);
   snor_spi_cmd_addr(devp, cmd, offset);
+#if SNOR_SPI_WORKAROUND_CACHE
+  spiSendNoCache(devp, n, p);
+#else
   spiSend(busp, n, p);
+#endif
   spiUnselect(busp);
 #endif
 }
@@ -647,7 +688,11 @@ void bus_cmd_dummy_receive(SNORDriver *devp,
   if (dummy != 0U) {
     spiIgnore(busp, dummy / 8U);
   }
+#if SNOR_SPI_WORKAROUND_CACHE
+  spiReceiveNoCache(devp, n, p);
+#else
   spiReceive(busp, n, p);
+#endif
   spiUnselect(busp);
 #endif
 }
