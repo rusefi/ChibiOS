@@ -445,6 +445,7 @@ void bus_cmd(SNORDriver *devp, uint32_t cmd) {
 #endif
 }
 
+#if SNOR_BUS_DRIVER == SNOR_BUS_DRIVER_SPI
 #if SNOR_SPI_WORKAROUND_CACHE
 
 #include <string.h>
@@ -472,6 +473,7 @@ static void spiReceiveNoCache(SNORDriver *devp, size_t n, void *rxbuf)
   }
 }
 
+#endif
 #endif
 
 /**
