@@ -39,11 +39,6 @@
 #define SNOR_BUS_DRIVER_WSPI                1U
 /** @} */
 
-/**
- * @brief   Size of the buffer for internal operations.
- */
-#define SNOR_BUFFER_SIZE                    32
-
 /*===========================================================================*/
 /* Driver pre-compile time settings.                                         */
 /*===========================================================================*/
@@ -97,6 +92,16 @@
 #if !defined(SNOR_SPI_WORKAROUND_CACHE) || defined(__DOXYGEN__)
 #define SNOR_SPI_WORKAROUND_CACHE           FALSE
 #endif
+
+/**
+ * @brief   Size of the buffer for internal operations.
+ * #details Size if intermediate nocache buffer for tx and rx
+ *          operations to avoid caching issues;
+ */
+#if !defined(SNOR_BUFFER_SIZE) || defined(__DOXYGEN__)
+#define SNOR_BUFFER_SIZE                    32
+#endif
+
 /** @} */
 
 /*===========================================================================*/
@@ -111,6 +116,14 @@
 #define BUSDriver WSPIDriver
 #else
 #error "invalid SNOR_BUS_DRIVER setting"
+#endif
+
+#if (SNOR_BUFFER_SIZE & (SNOR_BUFFER_SIZE - 1)) != 0
+#error "SNOR_BUFFER_SIZE is not a power of two"
+#endif
+
+#if SNOR_BUFFER_SIZE < 32
+#error "Invalid SNOR_BUFFER_SIZE value"
 #endif
 
 /*===========================================================================*/
