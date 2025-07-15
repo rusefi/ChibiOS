@@ -357,8 +357,8 @@ static void __spiReceive(SNORDriver *devp, size_t n, void *rxbuf)
   }
 }
 #else
-#define __spiSend(devp, n txbuf)    spiSend(devp->config->busp, n, txbuf)
-#define __spiReceive(devp, n rxbuf) spiReceive(devp->config->busp, n, rxbuf)
+#define __spiSend(devp, n, txbuf)    spiSend(devp->config->busp, n, txbuf)
+#define __spiReceive(devp, n, rxbuf) spiReceive(devp->config->busp, n, rxbuf)
 #endif
 
 void snor_spi_cmd_addr(SNORDriver *devp, uint32_t cmd, flash_offset_t offset) {
