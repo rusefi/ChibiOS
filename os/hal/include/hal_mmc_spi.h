@@ -34,7 +34,7 @@
 #define MMC_CMD0_RETRY                  10U
 #define MMC_CMD1_RETRY                  100U
 #define MMC_ACMD41_RETRY                100U
-#define MMC_WAIT_DATA                   10000U
+#define MMC_WAIT_DATA                   100000U
 
 /**
  * @brief   Size of the buffer to be supplied to the driver.
