@@ -860,7 +860,7 @@ bool sdcRead(SDCDriver *sdcp, uint32_t startblk, uint8_t *buf, uint32_t n) {
   osalDbgCheck((sdcp != NULL) && (buf != NULL) && (n > 0U));
   osalDbgAssert(sdcp->state == BLK_READY, "invalid state");
 
-  if ((startblk + n - 1U) > sdcp->capacity) {
+  if ((startblk >= sdcp->capacity) || (n > (sdcp->capacity - startblk))) {
     sdcp->errors |= SDC_OVERFLOW_ERROR;
     return HAL_FAILED;
   }
@@ -882,7 +882,7 @@ bool sdcRead(SDCDriver *sdcp, uint32_t startblk, uint8_t *buf, uint32_t n) {
  *
  * @param[in] sdcp      pointer to the @p SDCDriver object
  * @param[in] startblk  first block to write
- * @param[out] buf      pointer to the write buffer
+ * @param[in] buf       pointer to the write buffer
  * @param[in] n         number of blocks to write
  *
  * @return              The operation status.
@@ -898,7 +898,7 @@ bool sdcWrite(SDCDriver *sdcp, uint32_t startblk,
   osalDbgCheck((sdcp != NULL) && (buf != NULL) && (n > 0U));
   osalDbgAssert(sdcp->state == BLK_READY, "invalid state");
 
-  if ((startblk + n - 1U) > sdcp->capacity) {
+  if ((startblk >= sdcp->capacity) || (n > (sdcp->capacity - startblk))) {
     sdcp->errors |= SDC_OVERFLOW_ERROR;
     return HAL_FAILED;
   }
@@ -1009,6 +1009,13 @@ bool sdcErase(SDCDriver *sdcp, uint32_t startblk, uint32_t endblk) {
   osalDbgCheck((sdcp != NULL));
   osalDbgAssert(sdcp->state == BLK_READY, "invalid state");
 
+  if ((startblk >= sdcp->capacity) ||
+      (endblk >= sdcp->capacity) ||
+      (endblk < startblk)) {
+    sdcp->errors |= SDC_OVERFLOW_ERROR;
+    return HAL_FAILED;
+  }
+
   /* Erase operation in progress.*/
   sdcp->state = BLK_WRITING;
 
@@ -1059,4 +1066,3 @@ failed:
 #endif /* HAL_USE_SDC == TRUE */
 
 /** @} */
-
