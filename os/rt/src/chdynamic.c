@@ -137,15 +137,25 @@ thread_t *chThdCreateFromHeap(memory_heap_t *heapp, size_t size,
 thread_t *chThdCreateFromMemoryPool(memory_pool_t *mp, const char *name,
                                     tprio_t prio, tfunc_t pf, void *arg) {
   thread_t *tp;
+  size_t size;
   void *wbase, *wend;
 
   chDbgCheck(mp != NULL);
+
+  size = MEM_ALIGN_PREV(mp->object_size, PORT_STACK_ALIGN);
+  chDbgAssert((mp->provider == NULL) ||
+              (mp->align >= PORT_WORKING_AREA_ALIGN),
+              "invalid pool alignment");
+  chDbgAssert(size >= THD_WORKING_AREA_SIZE(0), "invalid pool object size");
 
   wbase = chPoolAlloc(mp);
   if (wbase == NULL) {
     return NULL;
   }
-  wend = (void *)((uint8_t *)wbase + mp->object_size);
+  chDbgAssert(MEM_IS_ALIGNED(wbase, PORT_WORKING_AREA_ALIGN),
+              "invalid pool object alignment");
+
+  wend = (void *)((uint8_t *)wbase + size);
 
   thread_descriptor_t td = THD_DESCRIPTOR(name, wbase, wend, prio, pf, arg);
 

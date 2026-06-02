@@ -74,6 +74,8 @@
 *****************************************************************************
 
 *** 21.11.6 ***
+- FIX: RT: Fixed chThdCreateFromMemoryPool() rejects valid fixed memory pools
+       due to overly strict alignment assertion (bug github #3).
 - FIX: Fixed RT trace halt event can dereference uninitialized trace buffer
        before kernel startup completes (bug #1309).
 - FIX: RT: Fixed lign aheap-created thread working area size (bug #1307).
