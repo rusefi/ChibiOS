@@ -126,6 +126,8 @@ static bool default_handler(USBDriver *usbp) {
     return true;
   case (uint32_t)USB_RTYPE_RECIPIENT_DEVICE | ((uint32_t)USB_REQ_GET_DESCRIPTOR << 8):
   case (uint32_t)USB_RTYPE_RECIPIENT_INTERFACE | ((uint32_t)USB_REQ_GET_DESCRIPTOR << 8):
+  {
+    size_t wLength;
     /* Handling descriptor requests from the host.*/
     dp = usbp->config->get_descriptor_cb(usbp, usbp->setup[3],
                                          usbp->setup[2],
@@ -133,10 +135,12 @@ static bool default_handler(USBDriver *usbp) {
     if (dp == NULL) {
       return false;
     }
+    wLength = get_hword(&usbp->setup[6]);
     /*lint -save -e9005 [11.8] Removing const is fine.*/
-    usbSetupTransfer(usbp, (uint8_t *)dp->ud_string, dp->ud_size, NULL);
+    usbSetupTransfer(usbp, (uint8_t *)dp->ud_string, wLength < dp->ud_size ? wLength : dp->ud_size, NULL);
     /*lint -restore*/
     return true;
+  }
   case (uint32_t)USB_RTYPE_RECIPIENT_DEVICE | ((uint32_t)USB_REQ_GET_CONFIGURATION << 8):
     /* Returning the last selected configuration.*/
     usbSetupTransfer(usbp, &usbp->configuration, 1, NULL);
