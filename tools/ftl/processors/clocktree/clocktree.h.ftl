@@ -17,51 +17,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
   --]
 [@pp.dropOutputFile /]
-[#import "/@lib/libutils.ftl" as utils /]
-[#import "/@lib/liblicense.ftl" as license /]
+[#import "/@lib/liblicense.ftlc" as license /]
+[#import "/@lib/libclocks.ftlc" as clocktree /]
+[@clocktree.ConfigurePreprocessor indentFactor=2 valueColumn=44 backslashColumn=76 splitColumn=80 /]
 [@pp.changeOutputFile name="clocktree.h" /]
-[#-- Getting various constants.--]
-[#assign prename = doc1.clocktree.settings.prefixes.@name[0]?string /]
-[#assign postvalues = doc1.clocktree.settings.postfixes.@values[0]?string /]
-[#assign postclocks = doc1.clocktree.settings.postfixes.@clocks[0]?string /]
-[#assign postchoices = doc1.clocktree.settings.postfixes.@choices[0]?string /]
-[#assign postbits = doc1.clocktree.settings.postfixes.@bits[0]?string /]
-[#assign postswitches = doc1.clocktree.settings.postfixes.@switches[0]?string /]
-[#assign constfalse = doc1.clocktree.settings.constants.@false[0]?string /]
-[#assign consttrue = doc1.clocktree.settings.constants.@true[0]?string /]
-[#-- Sequence of the calculated clock points.--]
-[#assign clocks_expr = [] /]
-[#-- Sequence of the muxed clock points.--]
-[#assign clocks_mux = [] /]
-[#-- Scanning clock points, gathering data.--]
-[#list doc1.clocktree.clocks.clock as clock]
-  [#assign clockname = clock.@name[0] /]
-  [#if clock.description[0]??]
-    [#assign clockdescr = clock.description[0]?string?word_list?join(" ") /]
-  [#else /]
-    [#assign clockdescr = "no description" /]
-  [/#if]
-  [#-- Determining the type of the clock point by looking at the child element.--]
-  [#if clock.expr[0]??]
-    [#-- It is a calculated clock.--]
-    [#assign clockfreq = clock.expr[0].@frequency[0]?string /]
-    [#assign clocks_expr = clocks_expr + [{"description":clockdescr,
-                                           "name":clockname,
-                                           "frequency":clockfreq}] /]
-  [#elseif clock.mux[0]??]
-    [#-- It is a muxed clock.--]
-    [#assign muxname = clock.mux[0].@name[0] /]
-    [#assign inputs = [] /]
-    [#list clock.mux.input as input]
-      [#assign inputref = input.@ref[0] /]
-      [#assign inputbits = input.@bits[0]!"" /]
-      [#assign inputs = inputs + [{"name":inputref, "bits":inputbits}] /]
-    [/#list]
-    [#assign clocks_mux = clocks_mux + [{"name":clockname,
-                                         "muxname":muxname,
-                                         "inputs":inputs}] /]
-  [/#if]
-[/#list]
 /*
 [@license.EmitLicenseAsText /]
 */
@@ -80,28 +39,37 @@
 /* Driver constants.                                                         */
 /*===========================================================================*/
 
+/**
+ * @name    Dynamic clock point indexes and names
+ * @{
+ */
+[@clocktree.EmitClockPointConstants /]
+/** @} */
+[@clocktree.EmitDefinitions /]
+[@clocktree.EmitMuxSelectorConstants /]
+[@clocktree.EmitScalerSelectorConstants /]
+
 /*===========================================================================*/
 /* Driver pre-compile time settings.                                         */
 /*===========================================================================*/
 
 /**
- * @name    Mux configurations
+ * @name    Clock tree configurations
  * @{
  */
-[#list clocks_mux as mux]
-  [#assign name = prename + mux["name"] + postchoices/]
-#if !defined(name) || defined(__DOXYGEN__)
-${("#define " + name)?right_pad(44) + prename + mux["name"] + "_" + mux["inputs"][0]["name"]}
-#endif
-[#sep]
-
-[/#sep]
-[/#list]
+[@clocktree.EmitConfigurations /]
 /** @} */
 
 /*===========================================================================*/
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
+
+/**
+ * @name    Clock point derived constants and checks
+ * @{
+ */
+[@clocktree.EmitDerivedConstants /]
+/** @} */
 
 /*===========================================================================*/
 /* Driver data structures and types.                                         */
@@ -111,20 +79,9 @@ ${("#define " + name)?right_pad(44) + prename + mux["name"] + "_" + mux["inputs"
 /* Driver macros.                                                            */
 /*===========================================================================*/
 
-/**
- * @name    Calculated or fixed clocks
- * @{
- */
-[#list clocks_expr as clock]
-/**
- * @brief   ${clock["description"]?cap_first} clock point.
- */
-${("#define " + prename + clock["name"] + postclocks)?right_pad(44) + clock["frequency"]}
-[#sep]
+[@clocktree.EmitCurrentClockDefinitions /]
 
-[/#sep]
-[/#list]
-/** @} */
+[@clocktree.EmitStaticClockPointGetter /]
 
 /*===========================================================================*/
 /* External declarations.                                                    */
