@@ -2533,6 +2533,18 @@ namespace chibios_rt {
     }
 
     /**
+     * @brief   Resets a Mailbox object.
+     * @details All the waiting threads are resumed with status @p MSG_RESET
+     *          and the queued messages are lost.
+     *
+     * @iclass
+     */
+    void resetI(void) {
+
+      chMBResetI(&mb);
+    }
+
+    /**
      * @brief   Terminates the reset state.
      *
      * @xclass
