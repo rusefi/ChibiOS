@@ -38,6 +38,11 @@
 /*===========================================================================*/
 #define STM32_FDCAN_FIFO_WATERMARK          1U
 
+#if (!defined(STM32_FDCAN_FLS_NBR) && !defined(STM32_FDCAN_FLE_NBR) && \
+     !defined(STM32_FDCAN_RF0_NBR) && !defined(STM32_FDCAN_RF1_NBR) && \
+     !defined(STM32_FDCAN_RB_NBR) && !defined(STM32_FDCAN_TEF_NBR) && \
+     !defined(STM32_FDCAN_TB_NBR) && !defined(STM32_FDCAN_TM_NBR))
+
 /*===========================================================================*/
 /* STM32H723xx, STM32H733xx, STM32H725xx, STM32H735xx, STM32H730xx.          */
 /*===========================================================================*/
@@ -167,6 +172,10 @@
 #endif
 #endif /* defined(STM32H7A3xx)  || defined(STM32H7B3xx) ||
           defined(STM32H7A3xxQ) || defined(STM32H7B3xxQ) */
+#endif /* (!defined(STM32_FDCAN_FLS_NBR) && !defined(STM32_FDCAN_FLE_NBR) && \
+           !defined(STM32_FDCAN_RF0_NBR) && !defined(STM32_FDCAN_RF1_NBR) && \
+           !defined(STM32_FDCAN_RB_NBR) && !defined(STM32_FDCAN_TEF_NBR) && \
+           !defined(STM32_FDCAN_TB_NBR) && !defined(STM32_FDCAN_TM_NBR)) */
 
 /* Size of element size (RAM words) */
 #define CAN_SIZE_RAM_WORDS              (4U)
@@ -253,8 +262,42 @@
 #define SRAMCAN_SIZE  ((uint32_t)(SRAMCAN_TMSA +                            \
                                   (STM32_FDCAN_TM_NBR * SRAMCAN_TM_SIZE)))
 
+#define SRAMCAN_SIZE_D  ( (STM32_FDCAN_FLS_NBR * SRAMCAN_FLS_SIZE) + \
+                          (STM32_FDCAN_FLE_NBR * SRAMCAN_FLE_SIZE) + \
+                          (STM32_FDCAN_RF0_NBR * SRAMCAN_RF0_SIZE) + \
+                          (STM32_FDCAN_RF1_NBR * SRAMCAN_RF1_SIZE) + \
+                          (STM32_FDCAN_RB_NBR * SRAMCAN_RB_SIZE) + \
+                          (STM32_FDCAN_TEF_NBR * SRAMCAN_TEF_SIZE) + \
+                          (STM32_FDCAN_TB_NBR * SRAMCAN_TB_SIZE) + \
+                          (STM32_FDCAN_TM_NBR * SRAMCAN_TM_SIZE) )
+
 #define TIMEOUT_INIT_MS                 250U
 #define TIMEOUT_CSA_MS                  250U
+
+#if defined(STM32H723xx) || defined(STM32H733xx) ||                         \
+    defined(STM32H725xx) || defined(STM32H735xx) ||                         \
+    defined(STM32H730xx) ||                                                 \
+    defined(__DOXYGEN__)
+
+#if (STM32_CAN_USE_FDCAN1 && STM32_CAN_USE_FDCAN2 && STM32_CAN_USE_FDCAN3)
+#define CAN_UNITS                           3U
+#elif ((STM32_CAN_USE_FDCAN1 && STM32_CAN_USE_FDCAN2 && !STM32_CAN_USE_FDCAN3) || \
+      (STM32_CAN_USE_FDCAN1 && STM32_CAN_USE_FDCAN3 && !STM32_CAN_USE_FDCAN2) || \
+      (STM32_CAN_USE_FDCAN2 && STM32_CAN_USE_FDCAN3 && !STM32_CAN_USE_FDCAN1))
+#define CAN_UNITS                           2U
+#elif ((STM32_CAN_USE_FDCAN1 && !STM32_CAN_USE_FDCAN2 && !STM32_CAN_USE_FDCAN3) || \
+       (STM32_CAN_USE_FDCAN2 && !STM32_CAN_USE_FDCAN1 && !STM32_CAN_USE_FDCAN3) || \
+       (STM32_CAN_USE_FDCAN3 && !STM32_CAN_USE_FDCAN1 && !STM32_CAN_USE_FDCAN2))
+#define CAN_UNITS                           1U
+#endif
+
+#if ((SRAMCAN_SIZE_D * CAN_UNITS) > 2560)
+    #error "Incorrect CAN message RAM configuration"
+#endif
+
+#endif /* defined(STM32H723xx) || defined(STM32H733xx) ||
+          defined(STM32H725xx) || defined(STM32H735xx) ||
+          defined(STM32H730xx) */
 
 /*===========================================================================*/
 /* Driver exported variables.                                                */
