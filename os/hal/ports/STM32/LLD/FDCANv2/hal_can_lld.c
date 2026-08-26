@@ -440,6 +440,9 @@ bool can_lld_start(CANDriver *canp) {
     *wp = (uint32_t)0U;
   }
 
+  /* Clear tx fifo */
+  canp->fdcan->TXBCR = 0xffffffff;
+
   /* Requesting clock stop.*/
   if (fdcan_clock_stop(canp)) {
     osalDbgAssert(false, "CAN clock stop failed, check clocks and pin config");
@@ -600,6 +603,9 @@ void can_lld_stop(CANDriver *canp) {
     canp->fdcan->IR  = (uint32_t)-1;
     canp->fdcan->ILE = 0U;
     canp->fdcan->TXBTIE = 0U;
+
+    /* Clear tx fifo */
+    canp->fdcan->TXBCR = 0xffffffff;
 
     /* Disables the peripheral.*/
     (void) fdcan_clock_stop(canp);
