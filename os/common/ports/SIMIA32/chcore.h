@@ -385,10 +385,16 @@ static inline bool port_is_isr_context(void) {
 /**
  * @brief   Kernel-lock action.
  * @details In this port this function disables interrupts globally.
+ * @note    Uses a nesting counter so that an S-class chSysUnlock() from
+ *          ISR context (e.g. CriticalSectionLocker inside a timer callback)
+ *          does not accidentally drop a lock held by chSysLockFromISR().
+ *          On real ARM hardware both S-class and I-class locks manipulate
+ *          BASEPRI identically, so nesting works implicitly; the simulator
+ *          must emulate that behavior explicitly.
  */
 static inline void port_lock(void) {
 
-  port_irq_sts = (syssts_t)1;
+  port_irq_sts++;
 }
 
 /**
@@ -397,7 +403,7 @@ static inline void port_lock(void) {
  */
 static inline void port_unlock(void) {
 
-  port_irq_sts = (syssts_t)0;
+  port_irq_sts--;
 }
 
 /**
@@ -407,7 +413,7 @@ static inline void port_unlock(void) {
  */
 static inline void port_lock_from_isr(void) {
 
-  port_irq_sts = (syssts_t)1;
+  port_irq_sts++;
 }
 
 /**
@@ -417,7 +423,7 @@ static inline void port_lock_from_isr(void) {
  */
 static inline void port_unlock_from_isr(void) {
 
-  port_irq_sts = (syssts_t)0;
+  port_irq_sts--;
 }
 
 /**
