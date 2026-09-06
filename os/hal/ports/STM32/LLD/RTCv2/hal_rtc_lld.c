@@ -627,6 +627,8 @@ void rtc_lld_set_time(RTCDriver *rtcp, const RTCDateTime *timespec) {
 /**
  * @brief   Get current time.
  * @note    The function can be called from any context.
+ * @note    If the calendar readings do not stabilize within 64 reads, the
+ *          last sample is returned and may be inconsistent.
  *
  * @param[in] rtcp      pointer to RTC driver structure
  * @param[out] timespec pointer to a @p RTCDateTime structure
@@ -636,6 +638,7 @@ void rtc_lld_set_time(RTCDriver *rtcp, const RTCDateTime *timespec) {
 void rtc_lld_get_time(RTCDriver *rtcp, RTCDateTime *timespec) {
   uint32_t cr, dr, tr, prev_dr, prev_tr;
   uint32_t subs;
+  unsigned retries = 64U;
 #if STM32_RTC_HAS_SUBSECONDS
   uint32_t ssr, prev_ssr;
 #endif /* STM32_RTC_HAS_SUBSECONDS */
@@ -644,7 +647,9 @@ void rtc_lld_get_time(RTCDriver *rtcp, RTCDateTime *timespec) {
   /* Entering a reentrant critical zone.*/
   sts = osalSysGetStatusAndLockX();
 
-  /* Repeated registers read until 2 matching sets are found.*/
+  /* Repeated registers read until 2 matching sets are found. The retry budget
+     bounds the time spent locked even if the calendar never stabilizes.
+     On exhaustion the last sample is used as a best effort result.*/
 #if STM32_RTC_HAS_SUBSECONDS
   ssr = 0U;
   tr  = 0U;
@@ -656,7 +661,8 @@ void rtc_lld_get_time(RTCDriver *rtcp, RTCDateTime *timespec) {
     ssr = rtcp->rtc->SSR;
     tr  = rtcp->rtc->TR;
     dr  = rtcp->rtc->DR;
-  } while ((ssr != prev_ssr) || (tr != prev_tr) || (dr != prev_dr));
+  } while (((ssr != prev_ssr) || (tr != prev_tr) || (dr != prev_dr)) &&
+           (--retries > 0U));
 #else /* !STM32_RTC_HAS_SUBSECONDS */
   tr  = 0U;
   dr  = 0U;
@@ -665,7 +671,7 @@ void rtc_lld_get_time(RTCDriver *rtcp, RTCDateTime *timespec) {
     prev_dr  = dr;
     tr  = rtcp->rtc->TR;
     dr  = rtcp->rtc->DR;
-  } while ((tr != prev_tr) || (dr != prev_dr));
+  } while (((tr != prev_tr) || (dr != prev_dr)) && (--retries > 0U));
 #endif /* !STM32_RTC_HAS_SUBSECONDS */
 
   /* DST bit is in CR, no need to poll on this one.*/
