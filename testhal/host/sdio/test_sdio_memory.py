@@ -78,6 +78,17 @@ int main(int argc, char **argv) {
     bool write = atoi(argv[2]) != 0;
     failAt = (unsigned)atoi(argv[3]);
     unsigned blocks = (unsigned)atoi(argv[4]);
+    if (region == 4) {
+        assert(!sdc_lld_buffer_valid(ccm, 0));
+        assert(!sdc_lld_buffer_valid(ccm, 32768));
+        assert(!sdc_lld_buffer_valid((uint8_t *)(UINTPTR_MAX - 100), 1));
+        assert(!sdc_lld_buffer_valid(ccm + sizeof(ccm) - 256, 1));
+        assert(!sdc_lld_buffer_valid((uint8_t *)((uintptr_t)ccm - 256), 1));
+        assert(sdc_lld_buffer_valid(ccm, 128));
+        assert(sdc_lld_buffer_valid(ccm + sizeof(ccm) - 512, 1));
+        puts("0 0 0 0");
+        return 0;
+    }
     uint8_t *p = (region < 2 ? ram : ccm) + (region & 1);
     for (unsigned i = 0; i < sizeof(disk); i++) disk[i] = (uint8_t)(i * 17 + i / 512);
     memset(p, 0xa5, blocks * 512);
@@ -128,10 +139,10 @@ class SdioMemoryTest(unittest.TestCase):
                                  str(fail), str(blocks)], check=True, capture_output=True, text=True)
         return tuple(map(int, result.stdout.split()))
 
-    def test_aligned_ccm_reaches_inaccessible_dma(self):
+    def test_aligned_ccm_uses_existing_sram_buffer(self):
         for support in (0, 1):
             for write in (0, 1):
-                self.assertEqual(self.run_path(2, write, support=support), (1, 1, 1, 0))
+                self.assertEqual(self.run_path(2, write, support=support), (0, 0, 3, 3))
 
     def test_sram_keeps_direct_multi_sector_path(self):
         for write in (0, 1):
@@ -147,6 +158,8 @@ class SdioMemoryTest(unittest.TestCase):
             for write in (0, 1):
                 self.assertEqual(self.run_path(3, write, fail), (1, 0, fail, fail - 1))
 
+    def test_rejects_overflow_and_partial_ccm_ranges(self):
+        self.assertEqual(self.run_path(4, 0), (0, 0, 0, 0))
 
 
 if __name__ == "__main__":
