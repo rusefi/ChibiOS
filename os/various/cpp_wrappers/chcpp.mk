@@ -1,3 +1,6 @@
+# Preserve the newlib bindings historically provided by the C++ wrapper.
+include $(CHIBIOS)/os/various/newlib_bindings/newlib.mk
+
 # C++ wrapper files.
 CHCPPSRC   =
 
