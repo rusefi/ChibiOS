@@ -86,10 +86,6 @@ static bool stopFailed;
 static void osalSysLock(void) { locked = 1; puts("locked"); fflush(stdout); }
 static void osalSysUnlock(void) { locked = 0; puts("unlocked"); fflush(stdout); }
 static int irqMode;
-static inline void osalThreadSuspendS(void **thread) {
-    (void)thread; suspended++;
-    if (irqMode == 2) for (;;) {}
-}
 static inline msg_t osalThreadSuspendTimeoutS(void **thread, unsigned timeout) {
     (void)thread; suspended++; now += timeout;
     return irqMode == 2 ? MSG_TIMEOUT : MSG_OK;
