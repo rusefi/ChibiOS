@@ -48,7 +48,7 @@ static _Alignas(16) uint8_t ccm[65536];
 static _Alignas(16) uint8_t ram[2048];
 static uint8_t disk[2048];
 #define CCMDATARAM_BASE ((uintptr_t)ccm)
-typedef struct { uint32_t errors; _Alignas(16) uint8_t buf[512]; } SDCDriver;
+typedef struct { uint32_t errors; uint8_t buf[512]; } SDCDriver;
 static unsigned calls, rejected, failAt, copied;
 static bool backend(SDCDriver *driver, uint32_t block, uint8_t *buf,
                     uint32_t count, bool write) {
@@ -94,6 +94,7 @@ int main(int argc, char **argv) {
     memset(p, 0xa5, blocks * 512);
     if (write) memcpy(p, disk, blocks * 512);
     SDCDriver driver = {0};
+    assert(((uintptr_t)driver.buf & 3U) == 0U);
     bool error = write ? sdc_lld_write(&driver, 10, p, blocks)
                        : sdc_lld_read(&driver, 10, p, blocks);
     if (!error) assert(memcmp(p, disk, blocks * 512) == 0);
