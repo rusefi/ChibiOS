@@ -859,6 +859,40 @@ error:
   return HAL_FAILED;
 }
 
+/* F4 CCM is CPU-only, even when word aligned. Keep the buffer in CCM and
+   reuse the driver's SRAM sector buffer instead of allocating another page. */
+static bool sdc_lld_buffer_valid(const uint8_t *buf, uint32_t blocks) {
+  uintptr_t start = (uintptr_t)buf;
+  if ((blocks == 0U) || (blocks >= 0x1000000U / MMCSD_BLOCK_SIZE) ||
+      (start > UINTPTR_MAX - (uintptr_t)blocks * MMCSD_BLOCK_SIZE)) {
+    return false;
+  }
+#if defined(STM32F4XX) && defined(CCMDATARAM_BASE)
+  uintptr_t end = start + (uintptr_t)blocks * MMCSD_BLOCK_SIZE;
+  const uintptr_t ccm_end = (uintptr_t)CCMDATARAM_BASE + 0x10000U;
+  if ((start < ccm_end) && (end > (uintptr_t)CCMDATARAM_BASE) &&
+      ((start < (uintptr_t)CCMDATARAM_BASE) || (end > ccm_end))) {
+    return false;
+  }
+#endif
+  return true;
+}
+
+static bool sdc_lld_needs_bounce(const uint8_t *buf) {
+#if defined(STM32F4XX) && defined(CCMDATARAM_BASE)
+  if (((uintptr_t)buf >= (uintptr_t)CCMDATARAM_BASE) &&
+      ((uintptr_t)buf < (uintptr_t)CCMDATARAM_BASE + 0x10000U)) {
+    return true;
+  }
+#endif
+#if STM32_SDC_SDIO_UNALIGNED_SUPPORT
+  return ((uintptr_t)buf & 3U) != 0U;
+#else
+  osalDbgAssert((((uintptr_t)buf & 3U) == 0U), "unaligned buffer");
+  return false;
+#endif
+}
+
 /**
  * @brief   Reads one or more blocks.
  *
@@ -876,8 +910,11 @@ error:
 bool sdc_lld_read(SDCDriver *sdcp, uint32_t startblk,
                   uint8_t *buf, uint32_t blocks) {
 
-#if STM32_SDC_SDIO_UNALIGNED_SUPPORT
-  if (((unsigned)buf & 3U) != 0U) {
+  if (!sdc_lld_buffer_valid(buf, blocks)) {
+    sdcp->errors |= SDC_OVERFLOW_ERROR;
+    return HAL_FAILED;
+  }
+  if (sdc_lld_needs_bounce(buf)) {
     uint32_t i;
     for (i = 0U; i < blocks; i++) {
       if (sdc_lld_read_aligned(sdcp, startblk, sdcp->buf, 1)) {
@@ -889,9 +926,6 @@ bool sdc_lld_read(SDCDriver *sdcp, uint32_t startblk,
     }
     return HAL_SUCCESS;
   }
-#else /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
-  osalDbgAssert((((unsigned)buf & 3U) == 0U), "unaligned buffer");
-#endif /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
   return sdc_lld_read_aligned(sdcp, startblk, buf, blocks);
 }
 
@@ -912,21 +946,22 @@ bool sdc_lld_read(SDCDriver *sdcp, uint32_t startblk,
 bool sdc_lld_write(SDCDriver *sdcp, uint32_t startblk,
                    const uint8_t *buf, uint32_t blocks) {
 
-#if STM32_SDC_SDIO_UNALIGNED_SUPPORT
-  if (((unsigned)buf & 3U) != 0U) {
+  if (!sdc_lld_buffer_valid(buf, blocks)) {
+    sdcp->errors |= SDC_OVERFLOW_ERROR;
+    return HAL_FAILED;
+  }
+  if (sdc_lld_needs_bounce(buf)) {
     uint32_t i;
     for (i = 0U; i < blocks; i++) {
       memcpy(sdcp->buf, buf, MMCSD_BLOCK_SIZE);
       buf += MMCSD_BLOCK_SIZE;
-      if (sdc_lld_write_aligned(sdcp, startblk, sdcp->buf, 1))
+      if (sdc_lld_write_aligned(sdcp, startblk, sdcp->buf, 1)) {
         return HAL_FAILED;
+      }
       startblk++;
     }
     return HAL_SUCCESS;
   }
-#else /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
-  osalDbgAssert((((unsigned)buf & 3U) == 0U), "unaligned buffer");
-#endif /* !STM32_SDC_SDIO_UNALIGNED_SUPPORT */
   return sdc_lld_write_aligned(sdcp, startblk, buf, blocks);
 }
 
