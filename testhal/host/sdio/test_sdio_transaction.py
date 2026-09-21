@@ -94,8 +94,9 @@ static inline msg_t osalThreadSuspendTimeoutS(void **thread, unsigned timeout) {
     (void)thread; suspended++; now += timeout;
     return irqMode == 2 ? MSG_TIMEOUT : MSG_OK;
 }
-static inline void dmaStreamClearInterrupt(Dma *dma) {
+static void dmaStreamClearInterrupt(Dma *dma) {
     (void)dma;
+    if (locked) abort();
     dmaCleared++;
 }
 static bool sdc_lld_send_cmd_short_crc(SDCDriver *sdcp, uint32_t cmd,
@@ -162,40 +163,47 @@ class SdioTransactionTest(unittest.TestCase):
                                str(pending_irq), str(blocks), str(stop_failed)],
                               capture_output=True, text=True, timeout=1, check=True)
 
-    def test_card_errors_wait_forever_for_unfinished_dma(self):
+    def test_card_errors_return_without_waiting_for_unfinished_dma(self):
         for flag in (1 << 1, 1 << 3, 1 << 4, 1 << 5, 1 << 9):
             for pending_irq in (0, 1):
                 with self.subTest(flag=flag, pending_irq=pending_irq):
-                    with self.assertRaises(subprocess.TimeoutExpired):
-                        self.run_driver(flag, dma=1, pending_irq=pending_irq)
+                    result = self.run_driver(flag, dma=1, pending_irq=pending_irq)
+                    # Unlock, skip DMA wait, retain status for the caller's cleanup.
+                    self.assertIn(f"result 1 0 {pending_irq} 0 0 0 99 0", result.stdout)
 
-    def test_dataend_with_error_and_dma_stuck_waits_forever(self):
-        with self.assertRaises(subprocess.TimeoutExpired):
-            self.run_driver((1 << 8) | (1 << 1), dma=1, blocks=4)
+    def test_dataend_does_not_hide_transfer_errors(self):
+        for flag in (1 << 1, 1 << 3, 1 << 4, 1 << 5, 1 << 9):
+            with self.subTest(flag=flag):
+                result = self.run_driver((1 << 8) | flag, dma=1, blocks=4)
+                self.assertIn("result 1 0 0 0 0 0 99 0", result.stdout)
 
-    def test_missing_dataend_with_dma_stuck_waits_forever(self):
-        with self.assertRaises(subprocess.TimeoutExpired):
-            self.run_driver(0, dma=1)
+    def test_missing_dataend_returns_failure(self):
+        result = self.run_driver(0, dma=1)
+        self.assertIn("result 1 0 0 0 0 0 99 0", result.stdout)
 
     def test_success_single_block(self):
-        self.assertIn("result 0 0 0 1 0 0 0 4294967295", self.run_driver(1 << 8).stdout)
+        result = self.run_driver(1 << 8)
+        self.assertIn("result 0 0 0 1 0 0 0 4294967295", result.stdout)
 
     def test_success_multi_block_after_irq_wait(self):
-        self.assertIn("result 0 0 1 1 1 0 0 4294967295", self.run_driver(1 << 8, pending_irq=1, blocks=4).stdout)
+        result = self.run_driver(1 << 8, pending_irq=1, blocks=4)
+        self.assertIn("result 0 0 1 1 1 0 0 4294967295", result.stdout)
 
     def test_stop_command_failure_is_reported(self):
-        self.assertIn("result 1 0 0 1 1 0 0 4294967295", self.run_driver(1 << 8, blocks=4, stop_failed=1).stdout)
+        result = self.run_driver(1 << 8, blocks=4, stop_failed=1)
+        self.assertIn("result 1 0 0 1 1 0 0 4294967295", result.stdout)
 
-    def test_missing_irq_waits_forever(self):
-        with self.assertRaises(subprocess.TimeoutExpired):
-            self.run_driver(0, dma=1, pending_irq=2)
+    def test_missing_irq_returns_failure_with_kernel_unlocked(self):
+        result = self.run_driver(0, dma=1, pending_irq=2)
+        self.assertIn("result 1 0 1 0 0 0 99 0", result.stdout)
 
-    def test_dataend_with_dma_stuck_waits_forever(self):
-        with self.assertRaises(subprocess.TimeoutExpired):
-            self.run_driver(1 << 8, dma=1)
+    def test_dataend_with_dma_stuck_returns_failure_across_clock_wrap(self):
+        result = self.run_driver(1 << 8, dma=1)
+        self.assertIn("result 1 0 0 0 0 0 99 0", result.stdout)
 
-    def test_cleanup_stops_dma_before_peripheral(self):
-        self.assertIn("cleanup 1 0 0 0", self.run_driver(1 << 3, dma=1, stop_failed=2).stdout)
+    def test_cleanup_disables_peripheral_and_dma_and_unlocks(self):
+        result = self.run_driver(1 << 3, dma=1, stop_failed=2)
+        self.assertIn("cleanup 0 0 0 0", result.stdout)
 
 
 if __name__ == "__main__":

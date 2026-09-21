@@ -93,6 +93,12 @@
 #define SDC_NICE_WAITING                    TRUE
 #endif
 
+/* Optional wall-clock bound while the card reports DATA/RCV/PRG. Zero keeps
+   the legacy policy (notably for boards performing long card erases). */
+#if !defined(SDC_WAIT_FOR_TRANSFER_TIMEOUT_MS)
+#define SDC_WAIT_FOR_TRANSFER_TIMEOUT_MS     0
+#endif
+
 /**
  * @brief   OCR initialization constant for V20 cards.
  */

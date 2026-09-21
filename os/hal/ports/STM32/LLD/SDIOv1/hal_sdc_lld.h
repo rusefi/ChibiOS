@@ -60,6 +60,18 @@
 #define STM32_SDC_WRITE_TIMEOUT_MS          1000
 #endif
 
+/* Software deadlines cover a lost interrupt or stalled DMA in addition to
+   the peripheral's data timer. DMA normally drains in a few bus cycles. */
+#if !defined(STM32_SDC_IRQ_MARGIN_MS)
+#define STM32_SDC_IRQ_MARGIN_MS             10
+#endif
+#if !defined(STM32_SDC_DMA_TIMEOUT_MS)
+#define STM32_SDC_DMA_TIMEOUT_MS            10
+#endif
+#if !defined(STM32_SDC_COMMAND_TIMEOUT_MS)
+#define STM32_SDC_COMMAND_TIMEOUT_MS        100
+#endif
+
 /**
  * @brief   Read timeout in milliseconds.
  */

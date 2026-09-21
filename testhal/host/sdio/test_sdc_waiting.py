@@ -110,15 +110,13 @@ class SdcWaitingTest(unittest.TestCase):
         return subprocess.run([str(self.exe), str(kind), str(healthy)], check=True,
                               capture_output=True, text=True, timeout=1)
 
-    def test_missing_command_completion_waits_forever(self):
+    def test_missing_command_completion_returns_timeout(self):
         for kind in range(4):
             with self.subTest(kind=kind):
-                with self.assertRaises(subprocess.TimeoutExpired):
-                    self.run_path(kind, 0)
+                self.assertEqual(self.run_path(kind, 0).stdout.strip(), "1 8")
 
-    def test_forever_busy_card_waits_forever(self):
-        with self.assertRaises(subprocess.TimeoutExpired):
-            self.run_path(4, 0)
+    def test_forever_busy_card_returns_timeout_across_clock_wrap(self):
+        self.assertEqual(self.run_path(4, 0).stdout.strip(), "1 4")
 
     def test_healthy_commands_and_card(self):
         for kind in range(5):

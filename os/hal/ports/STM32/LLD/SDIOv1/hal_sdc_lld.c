@@ -281,28 +281,52 @@ static bool sdc_lld_wait_transaction_end(SDCDriver *sdcp, uint32_t n,
   osalSysLock();
 
   if (sdcp->sdio->MASK != 0U) {
-    osalThreadSuspendS(&sdcp->thread);
+    const uint32_t timeout_ms = (sdcp->sdio->DCTRL & SDIO_DCTRL_DTDIR) ?
+        STM32_SDC_READ_TIMEOUT_MS : STM32_SDC_WRITE_TIMEOUT_MS;
+    if (osalThreadSuspendTimeoutS(&sdcp->thread,
+          OSAL_MS2I(timeout_ms + STM32_SDC_IRQ_MARGIN_MS)) == MSG_TIMEOUT) {
+      sdcp->sdio->MASK = 0U;
+      sdcp->errors |= SDC_DATA_TIMEOUT;
+      osalSysUnlock();
+      return HAL_FAILED;
+    }
   }
 
-  /* Stopping operations, waiting for transfer completion at DMA level, then
-     the stream is disabled and cleared.*/
-  dmaWaitCompletion(sdcp->dma);
   sdcp->sdio->MASK  = 0U;
-  sdcp->sdio->DCTRL = 0U;
+  osalSysUnlock();
 
-  if ((sdcp->sdio->STA & SDIO_STA_DATAEND) == 0) {
-    osalSysUnlock();
+  /* A failed SDIO transfer can stop requesting DMA before the stream is
+     complete. Waiting for that stream would hang forever, previously with
+     the kernel locked. Leave the status intact for sdc_lld_error_cleanup(),
+     which aborts DMA and records the error.*/
+  if (((sdcp->sdio->STA & SDIO_STA_DATAEND) == 0U) ||
+      ((sdcp->sdio->STA & (SDIO_STA_DCRCFAIL | SDIO_STA_DTIMEOUT |
+                          SDIO_STA_TXUNDERR | SDIO_STA_RXOVERR |
+                          SDIO_STA_STBITERR)) != 0U)) {
     return HAL_FAILED;
   }
+
+  /* On success the final DMA write may still be draining. Do not hold the
+     kernel lock while waiting for it.*/
+  const systime_t start = osalOsGetSystemTimeX();
+  const systime_t end = start + OSAL_MS2I(STM32_SDC_DMA_TIMEOUT_MS);
+  while ((sdcp->dma->stream->CR & STM32_DMA_CR_EN) != 0U) {
+    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
+      sdcp->errors |= SDC_DATA_TIMEOUT;
+      return HAL_FAILED;
+    }
+    osalThreadSleepMilliseconds(1);
+  }
+  dmaStreamClearInterrupt(sdcp->dma);
+  sdcp->sdio->DCTRL = 0U;
 
   /* Clearing status.*/
   sdcp->sdio->ICR = SDIO_ICR_ALL_FLAGS;
 
-  osalSysUnlock();
-
   /* Finalize transaction.*/
-  if (n > 1U)
+  if (n > 1U) {
     return sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_STOP_TRANSMISSION, 0, resp);
+  }
 
   return HAL_SUCCESS;
 }
@@ -350,12 +374,30 @@ static void sdc_lld_error_cleanup(SDCDriver *sdcp,
                                   uint32_t *resp) {
   uint32_t sta;
 
-  dmaStreamDisable(sdcp->dma);
-
-  /* Clearing status.*/
+  /* Stop peripheral requests before aborting DMA. Clear an already pending
+     IRQ before another transaction can install its thread reference. */
+  osalSysLock();
+  sdcp->sdio->MASK = 0U;
+  sdcp->sdio->DCTRL = 0U;
   sta                = sdcp->sdio->STA;
   sdcp->sdio->ICR   = sta;
-  sdcp->sdio->DCTRL = 0U;
+  NVIC_ClearPendingIRQ(STM32_SDIO_NUMBER);
+  osalSysUnlock();
+
+  sdcp->dma->stream->CR &= ~(STM32_DMA_CR_TCIE | STM32_DMA_CR_HTIE |
+                             STM32_DMA_CR_TEIE | STM32_DMA_CR_DMEIE |
+                             STM32_DMA_CR_EN);
+  const systime_t start = osalOsGetSystemTimeX();
+  const systime_t end = start + OSAL_MS2I(STM32_SDC_DMA_TIMEOUT_MS);
+  while ((sdcp->dma->stream->CR & STM32_DMA_CR_EN) != 0U) {
+    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
+      /* A physically stuck DMA cannot safely relinquish the buffer. Do not
+         reset DMA2 (also used by ADC) or return with DMA still owning memory. */
+      osalSysHalt("SDIO DMA abort");
+    }
+    osalThreadSleepMilliseconds(1);
+  }
+  dmaStreamClearInterrupt(sdcp->dma);
   sdc_lld_collect_errors(sdcp, sta);
 
   if (n > 1U) {
@@ -574,6 +616,26 @@ void sdc_lld_set_bus_mode(SDCDriver *sdcp, sdcbusmode_t mode) {
   }
 }
 
+static bool sdc_lld_wait_command(SDCDriver *sdcp, uint32_t flags,
+                                 uint32_t *status) {
+  const systime_t start = osalOsGetSystemTimeX();
+  const systime_t end = start + OSAL_MS2I(STM32_SDC_COMMAND_TIMEOUT_MS);
+  uint32_t polls = 0U;
+  while (((*status = sdcp->sdio->STA) & flags) == 0U) {
+    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
+      sdcp->sdio->CMD = 0U;
+      sdcp->errors |= SDC_COMMAND_TIMEOUT;
+      return HAL_FAILED;
+    }
+    /* Normal command responses take only a few microseconds. Yield only on
+       a prolonged wait, avoiding a scheduler tick per healthy command. */
+    if ((++polls & 1023U) == 0U) {
+      osalThreadSleepMilliseconds(1);
+    }
+  }
+  return HAL_SUCCESS;
+}
+
 /**
  * @brief   Sends an SDIO command with no response expected.
  *
@@ -584,11 +646,13 @@ void sdc_lld_set_bus_mode(SDCDriver *sdcp, sdcbusmode_t mode) {
  * @notapi
  */
 void sdc_lld_send_cmd_none(SDCDriver *sdcp, uint8_t cmd, uint32_t arg) {
+  uint32_t sta;
 
   sdcp->sdio->ARG = arg;
   sdcp->sdio->CMD = (uint32_t)cmd | SDIO_CMD_CPSMEN;
-  while ((sdcp->sdio->STA & SDIO_STA_CMDSENT) == 0)
-    ;
+  if (sdc_lld_wait_command(sdcp, SDIO_STA_CMDSENT, &sta)) {
+    return;
+  }
   sdcp->sdio->ICR = SDIO_ICR_CMDSENTC;
 }
 
@@ -613,9 +677,10 @@ bool sdc_lld_send_cmd_short(SDCDriver *sdcp, uint8_t cmd, uint32_t arg,
 
   sdcp->sdio->ARG = arg;
   sdcp->sdio->CMD = (uint32_t)cmd | SDIO_CMD_WAITRESP_0 | SDIO_CMD_CPSMEN;
-  while (((sta = sdcp->sdio->STA) & (SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT |
-                                     SDIO_STA_CCRCFAIL)) == 0)
-    ;
+  if (sdc_lld_wait_command(sdcp, SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT |
+                           SDIO_STA_CCRCFAIL, &sta)) {
+    return HAL_FAILED;
+  }
   sdcp->sdio->ICR = sta & (SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT |
                            SDIO_STA_CCRCFAIL);
   if ((sta & (SDIO_STA_CTIMEOUT)) != 0) {
@@ -646,9 +711,10 @@ bool sdc_lld_send_cmd_short_crc(SDCDriver *sdcp, uint8_t cmd, uint32_t arg,
 
   sdcp->sdio->ARG = arg;
   sdcp->sdio->CMD = (uint32_t)cmd | SDIO_CMD_WAITRESP_0 | SDIO_CMD_CPSMEN;
-  while (((sta = sdcp->sdio->STA) & (SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT |
-                                     SDIO_STA_CCRCFAIL)) == 0)
-    ;
+  if (sdc_lld_wait_command(sdcp, SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT |
+                           SDIO_STA_CCRCFAIL, &sta)) {
+    return HAL_FAILED;
+  }
   sdcp->sdio->ICR = sta & (SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT | SDIO_STA_CCRCFAIL);
   if ((sta & (SDIO_STA_CTIMEOUT | SDIO_STA_CCRCFAIL)) != 0) {
     sdc_lld_collect_errors(sdcp, sta);
@@ -681,9 +747,10 @@ bool sdc_lld_send_cmd_long_crc(SDCDriver *sdcp, uint8_t cmd, uint32_t arg,
   sdcp->sdio->ARG = arg;
   sdcp->sdio->CMD = (uint32_t)cmd | SDIO_CMD_WAITRESP_0 | SDIO_CMD_WAITRESP_1 |
                                     SDIO_CMD_CPSMEN;
-  while (((sta = sdcp->sdio->STA) & (SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT |
-                                     SDIO_STA_CCRCFAIL)) == 0)
-    ;
+  if (sdc_lld_wait_command(sdcp, SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT |
+                           SDIO_STA_CCRCFAIL, &sta)) {
+    return HAL_FAILED;
+  }
   sdcp->sdio->ICR = sta & (SDIO_STA_CMDREND | SDIO_STA_CTIMEOUT |
                            SDIO_STA_CCRCFAIL);
   if ((sta & (SDIO_STA_ERROR_MASK)) != 0) {

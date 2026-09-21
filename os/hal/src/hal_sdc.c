@@ -496,11 +496,21 @@ static bool mmc_set_bus_width(SDCDriver *sdcp) {
  * @notapi
  */
 static bool _sdc_wait_for_transfer_state_internal(SDCDriver *sdcp,
-                                                  bool crc_check) {
+                                                 bool crc_check) {
   uint32_t resp[1];
   bool cmd_fail;
+#if SDC_WAIT_FOR_TRANSFER_TIMEOUT_MS > 0
+  const systime_t start = osalOsGetSystemTimeX();
+  const systime_t end = start + OSAL_MS2I(SDC_WAIT_FOR_TRANSFER_TIMEOUT_MS);
+#endif
 
   while (true) {
+#if SDC_WAIT_FOR_TRANSFER_TIMEOUT_MS > 0
+    if (!osalTimeIsInRangeX(osalOsGetSystemTimeX(), start, end)) {
+      sdcp->errors |= SDC_DATA_TIMEOUT;
+      return HAL_FAILED;
+    }
+#endif
     if (crc_check) {
       cmd_fail = sdc_lld_send_cmd_short_crc(sdcp, MMCSD_CMD_SEND_STATUS, sdcp->rca, resp);
     }
