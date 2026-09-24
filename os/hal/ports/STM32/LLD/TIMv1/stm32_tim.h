@@ -48,6 +48,9 @@
 #define STM32_TIM_CR1_CKD_MASK              (3U << 8)
 #define STM32_TIM_CR1_CKD(n)                ((n) << 8)
 
+/* Plus Mode Enable - 32 bit mode timer */
+#define AT32_TIM_CR1_PMEN                   (1U << 10)
+
 #define STM32_TIM_CR1_UIFREMAP              (1U << 11)
 /** @} */
 
