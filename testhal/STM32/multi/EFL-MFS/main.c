@@ -25,6 +25,9 @@
 
 #include "portab.h"
 
+#if !defined(PORTAB_EFLD)
+#define PORTAB_EFLD EFLD1
+
 #ifndef STM32F7xx_MCUCONF
 const MFSConfig mfscfg1 = {
   .flashp           = (BaseFlash *)&EFLD1,
@@ -47,6 +50,7 @@ const MFSConfig mfscfg1 = {
   .bank1_sectors    = 1U
 };
 #endif
+#endif /* !defined(PORTAB_EFLD) */
 
 /*
  * LED blinker thread, times are in milliseconds.
@@ -83,7 +87,7 @@ int main(void) {
   portab_setup();
 
   /* Starting EFL driver.*/
-  eflStart(&EFLD1, NULL);
+  eflStart(&PORTAB_EFLD, NULL);
 
   /* Starting a serial port for test report output.*/
   sdStart(&PORTAB_SD1, NULL);

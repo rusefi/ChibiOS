@@ -269,6 +269,9 @@ void adc_lld_start(ADCDriver *adcp) {
       rccResetADC1();
 #endif
       rccEnableADC1(true);
+#if STM32_DMA_SUPPORTS_DMAMUX
+      dmaSetRequestSource(adcp->dmastp, STM32_DMAMUX1_ADC1);
+#endif
     }
 #endif /* STM32_ADC_USE_ADC1 */
 
@@ -284,6 +287,9 @@ void adc_lld_start(ADCDriver *adcp) {
       rccResetADC2();
 #endif
       rccEnableADC2(true);
+#if STM32_DMA_SUPPORTS_DMAMUX
+      dmaSetRequestSource(adcp->dmastp, STM32_DMAMUX1_ADC2);
+#endif
     }
 #endif /* STM32_ADC_USE_ADC2 */
 
@@ -299,6 +305,9 @@ void adc_lld_start(ADCDriver *adcp) {
       rccResetADC3();
 #endif
       rccEnableADC3(true);
+#if STM32_DMA_SUPPORTS_DMAMUX
+      dmaSetRequestSource(adcp->dmastp, STM32_DMAMUX1_ADC3);
+#endif
     }
 #endif /* STM32_ADC_USE_ADC3 */
 
