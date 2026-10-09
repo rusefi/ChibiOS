@@ -588,14 +588,8 @@ void dmaInit(void) {
     dma.streams[i].func = NULL;
   }
   DMA1->IFCR = 0xFFFFFFFFU;
-#if STM32_DMA_HAS_DMAMUXSEL == TRUE
-  DMA1->MUXSEL = 0x1;
-#endif
 #if STM32_DMA2_NUM_CHANNELS > 0
   DMA2->IFCR = 0xFFFFFFFFU;
-#if STM32_DMA_HAS_DMAMUXSEL == TRUE
-  DMA2->MUXSEL = 0x1;
-#endif
 #endif
 }
 
@@ -667,10 +661,18 @@ const stm32_dma_stream_t *dmaStreamAllocI(uint32_t id,
       /* Enabling DMA clocks required by the current streams set.*/
       if ((STM32_DMA1_STREAMS_MASK & mask) != 0U) {
         rccEnableDMA1(true);
+#if STM32_DMA_HAS_DMAMUXSEL == TRUE
+        /* The mux selection register is writable only with the DMA clock on. */
+        DMA1->MUXSEL = 1U;
+#endif
       }
 #if STM32_DMA2_NUM_CHANNELS > 0
       if ((STM32_DMA2_STREAMS_MASK & mask) != 0U) {
         rccEnableDMA2(true);
+#if STM32_DMA_HAS_DMAMUXSEL == TRUE
+        /* The mux selection register is writable only with the DMA clock on. */
+        DMA2->MUXSEL = 1U;
+#endif
       }
 #endif
 

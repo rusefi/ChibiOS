@@ -394,7 +394,7 @@ typedef struct
 {
   __IO uint32_t ISR;    /*!< DMA interrupt status register,                 Address offset: 0x00 */
   __IO uint32_t IFCR;   /*!< DMA interrupt flag clear register,             Address offset: 0x04 */
-  DMA_Channel_TypeDef ch[7];
+  uint32_t RESERVED[62]; /* 0x008..0x0FF; channels use their own base addresses. */
   __IO uint32_t MUXSEL; /*!< DMA MUX selection register,                    Address offset: 0x100 */
   DMAMUX_Channel_TypeDef MUXC[7];
   DMAMUX_Channel_TypeDef MUXG[4];
@@ -1978,7 +1978,7 @@ typedef struct
 #define ADC_CCR_DMA_0             (0x1U << ADC_CCR_DMA_Pos)                    /*!< 0x00004000 */
 #define ADC_CCR_DMA_1             (0x2U << ADC_CCR_DMA_Pos)                    /*!< 0x00008000 */
 #define ADC_CCR_ADCPRE_Pos        (16U)                                        
-#define ADC_CCR_ADCPRE_Msk        (0x3U << ADC_CCR_ADCPRE_Pos)                 /*!< 0x00030000 */
+#define ADC_CCR_ADCPRE_Msk        (0xFU << ADC_CCR_ADCPRE_Pos)                 /*!< 0x00030000 */
 #define ADC_CCR_ADCPRE            ADC_CCR_ADCPRE_Msk                           /*!<ADCPRE[1:0] bits (ADC prescaler) */  
 #define ADC_CCR_ADCPRE_0          (0x1U << ADC_CCR_ADCPRE_Pos)                 /*!< 0x00010000 */
 #define ADC_CCR_ADCPRE_1          (0x2U << ADC_CCR_ADCPRE_Pos)                 /*!< 0x00020000 */

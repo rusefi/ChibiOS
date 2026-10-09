@@ -118,7 +118,19 @@ static void adc_lld_serve_interrupt(ADCDriver *adcp, uint32_t sr) {
     if ((sr & ADC_SR_OVR) && (adcp->state == ADC_ACTIVE)) {
       /* ADC overflow condition, this could happen only if the DMA is unable
          to read data fast enough.*/
-      emask |= ADC_ERR_OVERFLOW;
+#if defined(AT32F435xx) || defined(AT32F437xx)
+      if (!adcp->grpp->circular &&
+          dmaStreamGetTransactionSize(adcp->dmastp) == 0U) {
+        /* The linear buffer is already complete. The shared ADC IRQ can run
+           before the DMA completion IRQ after a critical section. Extra
+           conversions must not discard the completed batch or its callback. */
+        adcp->adc->CR1 &= ~ADC_CR1_OVRIE;
+      }
+      else
+#endif
+      {
+        emask |= ADC_ERR_OVERFLOW;
+      }
     }
     if (sr & ADC_SR_AWD) {
       /* Analog watchdog 1 error.*/
@@ -321,6 +333,10 @@ void adc_lld_start(ADCDriver *adcp) {
     adcp->adc->CR1 = 0;
     adcp->adc->CR2 = 0;
     adcp->adc->CR2 = ADC_CR2_ADON;
+#if defined(AT32F435xx) || defined(AT32F437xx)
+    while ((adcp->adc->SR & (1U << 6)) == 0U) { /* RDY */
+    }
+#endif
   }
 }
 
@@ -385,6 +401,13 @@ void adc_lld_start_conversion(ADCDriver *adcp) {
   else {
     cr2 = 0U;
   }
+#if defined(AT32F435xx) || defined(AT32F437xx)
+  /* AT32 stops DMA requests at the end of a sequence without DDS.
+     A linear oversampling buffer still needs requests for every sequence. */
+  if (adcp->depth > 1U) {
+    cr2 |= ADC_CR2_DDS;
+  }
+#endif
   dmaStreamSetMemory0(adcp->dmastp, adcp->samples);
   dmaStreamSetTransactionSize(adcp->dmastp, (uint32_t)grpp->num_channels *
                                             (uint32_t)adcp->depth);
@@ -435,9 +458,18 @@ void adc_lld_stop_conversion(ADCDriver *adcp) {
 
   dmaStreamDisable(adcp->dmastp);
   adcp->adc->CR1 = 0U;
+#if defined(AT32F435xx) || defined(AT32F437xx)
+  /* Stop the conversion without powering down the AT32 analog part. A DMA
+     completion callback can start the next group immediately; cycling ADON
+     here races its analog startup and can leave SWSTART pending forever. */
+  adcp->adc->CR2 |= (1U << 4); /* ADABRT */
+  while ((adcp->adc->CR2 & (1U << 4)) != 0U) {
+  }
+#else
   if ((adcp->adc->CR2 & ADC_CR2_CONT) != 0U) {
     adcp->adc->CR2 = 0U;
   }
+#endif
   adcp->adc->CR2 = ADC_CR2_ADON;
 }
 

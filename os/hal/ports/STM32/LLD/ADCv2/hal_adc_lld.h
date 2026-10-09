@@ -78,10 +78,18 @@
  * @name    ADC clock divider settings
  * @{
  */
+#if defined(AT32F435xx) || defined(AT32F437xx)
+/* AT32 divides HCLK by encoded value + 2 (not PCLK2 by 2, 4, 6, 8). */
+#define ADC_CCR_ADCPRE_DIV2     0
+#define ADC_CCR_ADCPRE_DIV4     2
+#define ADC_CCR_ADCPRE_DIV6     4
+#define ADC_CCR_ADCPRE_DIV8     6
+#else
 #define ADC_CCR_ADCPRE_DIV2     0
 #define ADC_CCR_ADCPRE_DIV4     1
 #define ADC_CCR_ADCPRE_DIV6     2
 #define ADC_CCR_ADCPRE_DIV8     3
+#endif
 /** @} */
 
 /**
@@ -286,7 +294,12 @@
 #endif /* !STM32_DMA_SUPPORTS_DMAMUX */
 
 /* ADC clock related settings and checks.*/
-#if STM32_ADC_ADCPRE == ADC_CCR_ADCPRE_DIV2
+#if defined(AT32F435xx) || defined(AT32F437xx)
+#if STM32_ADC_ADCPRE < 0 || STM32_ADC_ADCPRE > 15
+#error "invalid AT32 ADC divider encoding"
+#endif
+#define STM32_ADCCLK                        (STM32_HCLK / (STM32_ADC_ADCPRE + 2))
+#elif STM32_ADC_ADCPRE == ADC_CCR_ADCPRE_DIV2
 #define STM32_ADCCLK                        (STM32_PCLK2 / 2)
 #elif STM32_ADC_ADCPRE == ADC_CCR_ADCPRE_DIV4
 #define STM32_ADCCLK                        (STM32_PCLK2 / 4)
