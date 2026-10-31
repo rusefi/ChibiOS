@@ -15,3 +15,8 @@ build/
 !demos/RP/RT-RP2040-PICO/debug/*.launch
 !demos/STM32/RT-STM32L552ZE-NUCLEO144/debug/*.launch
 !demos/various/RT-ARM7-GENERIC/debug/*.launch
+
+
+# IDEA
+.idea
+*.iml
