@@ -11,11 +11,14 @@ jobs:
         with:
           submodules: recursive
 
-      # Build machines don't have arm-none-eabi gcc, so let's download it and put it on the path
-      - name: Download & Install GCC
-        run: |
-          tools/provide_gcc.sh
-          echo "$PWD/gcc-arm-none-eabi/bin" >> "$GITHUB_PATH"
+      - name: Acquire Arm GNU Toolchain (arm-none-eabi-gcc)
+        uses: carlosperate/arm-none-eabi-gcc-action@v1.14.1
+        with:
+          release: '14.2.Rel1'
+
+      # Make sure the compiler we just downloaded works - just print out the version
+      - name: Test arm-none-eabi-gcc Compiler
+        run: arm-none-eabi-gcc -v
 
       - name: 1. Compile AT32 USB testhal
         run: |
