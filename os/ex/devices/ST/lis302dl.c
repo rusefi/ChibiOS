@@ -215,7 +215,7 @@ static msg_t acc_set_bias(void *ip, float *bp) {
                 "acc_set_bias(), invalid state");
 
   for(i = 0; i < LIS302DL_ACC_NUMBER_OF_AXES; i++) {
-    devp->accbias[i] = bp[i];
+    devp->accbias[i] = (int32_t)bp[i];
   }
   return msg;
 }
@@ -396,7 +396,7 @@ static msg_t acc_set_full_scale(LIS302DLDriver *devp, lis302dl_acc_fs_t fs) {
     /* Scaling sensitivity and bias. Re-calibration is suggested anyway. */
     for(i = 0; i < LIS302DL_ACC_NUMBER_OF_AXES; i++) {
       devp->accsensitivity[i] *= scale;
-      devp->accbias[i] *= scale;
+      devp->accbias[i] = (int32_t)(devp->accbias[i] * scale);
     }
   }
   return msg;
@@ -521,7 +521,7 @@ msg_t lis302dlStart(LIS302DLDriver *devp, const LIS302DLConfig *config) {
   /* Storing bias information according to user setting */
   if(devp->config->accbias != NULL)
     for(i = 0; i < LIS302DL_ACC_NUMBER_OF_AXES; i++)
-      devp->accbias[i] = devp->config->accbias[i];
+      devp->accbias[i] = (int32_t)devp->config->accbias[i];
   else
     for(i = 0; i < LIS302DL_ACC_NUMBER_OF_AXES; i++)
       devp->accbias[i] = LIS302DL_ACC_BIAS;
