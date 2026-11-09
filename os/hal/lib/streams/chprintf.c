@@ -85,7 +85,7 @@ static char *ftoa(char *p, double num, unsigned long precision) {
   };
   long l;
 
-  if (isnan(num)) {
+  if (isnan((float)num)) {
         *p ++ = 'N';
         *p ++ = 'a';
         *p ++ = 'N';
