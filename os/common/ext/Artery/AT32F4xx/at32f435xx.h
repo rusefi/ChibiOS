@@ -532,7 +532,25 @@ typedef struct
   __IO uint32_t STS;      /*!< FLASH status register,                 Address offset: 0x0C */
   __IO uint32_t CTRL;     /*!< FLASH control register,                Address offset: 0x10 */
   __IO uint32_t ADDR;     /*!< FLASH address registe,                 Address offset: 0x14 */
+  uint32_t      RESERVED0;   /*!< Reserved,                             Address offset: 0x18 */
+  __IO uint32_t USD;      /*!< User system data register,             Address offset: 0x1C */
+  __IO uint32_t EPPS0;    /*!< Erase/program protection status,       Address offset: 0x20 */
+  uint32_t      RESERVED1[2]; /*!< Reserved,                            Address offset: 0x24 */
+  __IO uint32_t EPPS1;    /*!< Erase/program protection status,       Address offset: 0x2C */
+  uint32_t      RESERVED2[5]; /*!< Reserved,                            Address offset: 0x30 */
+  __IO uint32_t UNLOCK2;  /*!< Bank2 unlock register,                 Address offset: 0x44 */
+  uint32_t      RESERVED3;   /*!< Reserved,                             Address offset: 0x48 */
+  __IO uint32_t STS2;     /*!< Bank2 status register,                 Address offset: 0x4C */
+  __IO uint32_t CTRL2;    /*!< Bank2 control register,                Address offset: 0x50 */
+  __IO uint32_t ADDR2;    /*!< Bank2 address register,                Address offset: 0x54 */
+  __IO uint32_t CONTR;    /*!< Flash continue read enable register,   Address offset: 0x58 */
+  uint32_t      RESERVED4;   /*!< Reserved,                             Address offset: 0x5C */
+  __IO uint32_t DIVR;     /*!< Flash divider register,                Address offset: 0x60 */
 } FLASH_TypeDef;
+/* NOTE: layout above matches the official AT32F435/437 CMSIS header
+   (ChibiOS-Contrib os/common/ext/CMSIS/ArteryTek/AT32F435_437); DIVR holds
+   the flash clock divider (FDIV[1:0]) and must be programmed before HCLK
+   exceeds the flash clock limit. */
 
 
 /**
@@ -7132,6 +7150,30 @@ typedef struct
 /*                                    FLASH                                   */
 /*                                                                            */
 /******************************************************************************/
+/*******************  Bits definition for FLASH_PSR register  *****************/
+#define FLASH_PSR_NZW_BST_Pos          (12U)
+#define FLASH_PSR_NZW_BST_Msk          (0x1U << FLASH_PSR_NZW_BST_Pos)         /*!< 0x00001000 */
+#define FLASH_PSR_NZW_BST              FLASH_PSR_NZW_BST_Msk                   /*!< Non-zero wait boost enable */
+#define FLASH_PSR_NZW_BST_STS_Pos      (13U)
+#define FLASH_PSR_NZW_BST_STS_Msk      (0x1U << FLASH_PSR_NZW_BST_STS_Pos)     /*!< 0x00002000 */
+#define FLASH_PSR_NZW_BST_STS          FLASH_PSR_NZW_BST_STS_Msk               /*!< Non-zero wait boost status */
+
+/*******************  Bits definition for FLASH_DIVR register  *****************/
+#define FLASH_DIVR_FDIV_Pos            (0U)
+#define FLASH_DIVR_FDIV_Msk            (0x3U << FLASH_DIVR_FDIV_Pos)           /*!< 0x00000003 */
+#define FLASH_DIVR_FDIV                FLASH_DIVR_FDIV_Msk                     /*!< Flash clock divider (0=/2, 1=/3, 2=/4) */
+#define FLASH_DIVR_FDIV_2              (0x0U << FLASH_DIVR_FDIV_Pos)           /*!< Flash clock = HCLK/2 */
+#define FLASH_DIVR_FDIV_3              (0x1U << FLASH_DIVR_FDIV_Pos)           /*!< Flash clock = HCLK/3 */
+#define FLASH_DIVR_FDIV_4              (0x2U << FLASH_DIVR_FDIV_Pos)           /*!< Flash clock = HCLK/4 */
+#define FLASH_DIVR_FDIV_STS_Pos        (4U)
+#define FLASH_DIVR_FDIV_STS_Msk        (0x3U << FLASH_DIVR_FDIV_STS_Pos)       /*!< 0x00000030 */
+#define FLASH_DIVR_FDIV_STS            FLASH_DIVR_FDIV_STS_Msk                 /*!< Flash clock divider status */
+
+/*******************  Bits definition for FLASH_CONTR register  ****************/
+#define FLASH_CONTR_FCONTR_EN_Pos      (31U)
+#define FLASH_CONTR_FCONTR_EN_Msk      (0x1U << FLASH_CONTR_FCONTR_EN_Pos)     /*!< 0x80000000 */
+#define FLASH_CONTR_FCONTR_EN          FLASH_CONTR_FCONTR_EN_Msk               /*!< Flash continue read (prefetch) enable */
+
 /*******************  Bits definition for FLASH_STS register  *****************/
 #define FLASH_STS_OBF_Pos              (0U)                                   
 #define FLASH_STS_OBF_Msk              (0x1U << FLASH_STS_OBF_Pos)             /*!< 0x00000001 */
