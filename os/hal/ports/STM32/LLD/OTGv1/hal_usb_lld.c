@@ -51,7 +51,17 @@
 #define BOARD_OTG2_ULPI_CHIRP_DELAY_MASK 0
 #endif
 
-#if STM32_OTG_STEPPING == 1
+#if defined(AT32F4XX)
+/* AT32 uses DCTL.SDIS like stepping 2, but GCCFG bit 21 is VBUSIG.
+   Without VBUS wiring the PHY needs this bit set to enable its D+ pull-up.
+   GCCFG bits 18/19 and the GOTGCTL session overrides are reserved on AT32.*/
+#if defined(BOARD_OTG_NOVBUSSENS)
+#define GCCFG_INIT_VALUE        (GCCFG_VBUSIG | GCCFG_PWRDWN)
+#else
+#define GCCFG_INIT_VALUE        GCCFG_PWRDWN
+#endif
+
+#elif STM32_OTG_STEPPING == 1
 #if defined(BOARD_OTG_NOVBUSSENS)
 #define GCCFG_INIT_VALUE        (GCCFG_NOVBUSSENS | GCCFG_PWRDWN)
 #else
