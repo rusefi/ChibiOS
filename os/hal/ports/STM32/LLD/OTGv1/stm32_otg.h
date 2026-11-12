@@ -427,6 +427,8 @@ typedef struct {
 
 /* Definitions for stepping 2.*/
 #define GCCFG_VBDEN             (1U << 21)  /**< VBUS sensing enable.       */
+/* AT32F435/437: bit 21 ignores VBUS, unlike STM32 stepping 2.*/
+#define GCCFG_VBUSIG            (1U << 21)  /**< Ignore VBUS on AT32.       */
 #define GCCFG_PWRDWN            (1U << 16)  /**< Power down.                */
 /** @} */
 
